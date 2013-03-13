@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# Make sure that CROHMELibDir and LgEvalDir are defined in
+# your shell enviroment, e.g. by including:
+#	
+#	export LgEvalDir=<path_to_LgEval>
+#	export CROHMELibDir=<path_to_CROHMELib>       		
+#	export PATH=$PATH:$CROHMELibDir/bin:$LgEvalDir/bin
+# 
+# in your .bashrc file (the initialization file for bash shell). The PATH
+# alteration will add the tools to your search path. 
+
+if [ $# -lt 1 ]
+then
+	echo "Usage: eval <outputDir> [groundTruthDir]"
+	echo ""
+	echo "Compares all .lg files in groundTruthDir to to matching"
+	echo "files (currently, with res_ prefix, and .inkml.lg sufix)."
+	echo ""
+	echo "Note: this script compares label graphs (.lg files)."
+	echo ""
+	echo "Output files:"
+	echo "  - .m (metric) and .diff (difference) files for"
+	echo "    each test file in outputDir"
+	echo "  - ./Correct[outputDir] containing the list of correct"
+	echo "     files from outputDir (i.e. matching groundTruth)"
+	echo "  - ./Metrics[outputDir] compiling all metric values"
+	echo "  - ./Diffs[outputDir] compiling all differences"
+	echo ""
+	echo "  - ./Results[outputDir] summarizing performance metrics"
+	echo "  - ./Diffs[outputDir].csv, providing node and edge label"
+	echo "    confusion matrices (NOTE: currently errors only - no correct counts)"
+
+	exit 0
+fi
+
+dir=$1
+echo "Evaluating recognizer output files in $dir..."
+# Remove summary files.
+rm -f Correct$dir Results$dir Diffs$dir Metrics$dir
+
+
+# Compute all .m metrics outputs (per-file), and .diff results (per-file).
+cd $dir
+# Clean up old evaluation files
+rm -f *.m *.diff  
+
+truthDir=testDataGT
+if [ $# -gt 1 ]
+then
+	truthDir=$2
+fi
+
+PREFIX=res_
+#PREFIX=""   # For use with ground truth data on itself.
+for file in ../$truthDir/*.lg
+do
+	nextFile=`basename $file`
+
+	python evallg.py $PREFIX$nextFile $file m > $nextFile.m
+	DIFF=`python evallg.py $PREFIX$nextFile $file diff`
+	if [ -n "$DIFF" ]
+	then
+		echo "$DIFF" > $nextFile.diff
+	else
+		echo "$PREFIX$nextFile" >> ../Correct$dir
+	fi
+done
+
+# Back to main directory - compile all metrics/diffs,
+# and then compute metric summaries and confusion matrices.
+cd ..
+cat $dir/*.m > ./Metrics$dir
+cat $dir/*.diff > ./Diffs$dir
+
+python sumMetric.py Metrics$dir > Results$dir
+python sumDiff.py Diffs$dir > Diffs$dir.csv
+
+echo "finished."
+
