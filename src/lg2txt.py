@@ -83,11 +83,17 @@ def translateStructure( lg, label, nodeRelationPairs, structureMap,\
 	for (childId, relation) in sortedNodeRelationPairs:
 		queryList += [ relation ]
 
+	#print(primListString)
+	#print(queryList)
+
 	# Obtain the replacement, provided as an ordered sequence of
 	# regions, giving the order in which to map subregions.
 	key = tuple(queryList)
+	#print("key: " + str(key))
+	#print(structureMap.keys())
 	if key in structureMap.keys():
 		replacementTuple = structureMap[ key ]
+		#print("replacement: " + str(replacementTuple))
 
 		# Find the node that matches each relation in the passed list,
 		# and generate the appropriate string.
