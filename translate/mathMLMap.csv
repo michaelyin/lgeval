@@ -181,8 +181,8 @@ in,->,<mo xml:id=_I_>\in</mo>
 \geq,->,<mi xml:id=_I_>\geq</mi>
 =,->,<mo xml:id=_I_>=</mo>
 # !! Note: we have synonymns here; mapping to same MathML objects.
->,->,<mo xml:id=_I_>\lt</mo>
-<,->,<mo xml:id=_I_>\gt</mo>
+<,->,<mo xml:id=_I_>\lt</mo>
+>,->,<mo xml:id=_I_>\gt</mo>
 \lt,->,<mo xml:id=_I_>\lt</mo>
 \gt,->,<mo xml:id=_I_>\gt</mo>
 
@@ -203,6 +203,7 @@ gt,->,<mo xml:id=_I_>\gt</mo>
 COMMA,->,"<mo xml:id=_I_>,</mo>"
 .,->,<mo xml:id=_I_>.</mo>
 dot,->,<mo xml:id=_I_>.</mo>
+cdot,->,<mo xml:id=_I_>.</mo>
 \ldots,->,<mo xml:id=_I_>\ldots</mo>
 \cdots,->,<mo xml:id=_I_>\cdots</mo>
 
@@ -247,6 +248,7 @@ STRUCTURE
 sqrt,I,->,<msqrt xml:id=_I_>,I,</msqrt>
 sqrt,C,->,<msqrt xml:id=_I_>,C,</msqrt>
 \sqrt,CONTAINS,->,<msqrt xml:id=_I_>,CONTAINS,</msqrt>
+\sqrt,I,->,<msqrt xml:id=_I_>,I,</msqrt>
 sqrt,CONTAINS,->,<msqrt xml:id=_I_>,CONTAINS,</msqrt>
 
 # RZ: Addition for nth-roots (e.g. cube roots, March 25)
