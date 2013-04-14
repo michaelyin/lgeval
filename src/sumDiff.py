@@ -41,7 +41,11 @@ def affMatHTML(output, allID, confM):
 				val = ""
 			output.write('<td class="col_'+str(i)+'">'+val+"</td>")
 			i = i+1
-		output.write("</tr>\n")
+		output.write("<th>"+str(k1)+"</th></tr>\n")
+	output.write("<tr><th></th>")
+	for k in sorted(allID):
+		output.write("<th>"+str(k)+"</th>")
+	output.write("</tr>\n")		
 	output.write("</table>\n")
 
 def writeCSS(output, allID):
@@ -61,9 +65,9 @@ def writeCSS(output, allID):
 def main():
 	if len(sys.argv) < 2:
 		print("usage : [[python]] sumDiff.py <file1.diff> [HTML]\n")
-		print("	Merge results for each line in a confusion Matrix")
-		print("	default ouput in stdout with CSV format")
-		print("	[HTML] option changes ouput format to HTML")
+		print("	Merge results for each line in a confusion Matrix.")
+		print("	By default output is sent to stdout in CSV format.")
+		print("	[HTML] option changes output format to HTML")
 		sys.exit(0)
 	# Read data from CSV file.
 	fileName = sys.argv[1]
@@ -122,8 +126,10 @@ def main():
 		print ("<b>Rows</b>: Output labels <b>Columns</b>: Ground truth labels")
 		print ("")
 		print ("<h2>Stroke label confusion matrix (errors only)</h2>")
+		print ("<p>"+str(len(allLabel)) + " symbol labels</p>")
 		affMatHTML(sys.stdout, allLabel, labelM)
 		print ("<h2>Spatial Relation confusion matrix (errors only)</h2>")
+		print ("<p>"+str(len(allSR)) + " SR labels</p>")
 		affMatHTML(sys.stdout, allSR, spatRelM)
 		sys.stdout.write('</html>')
 	else:
