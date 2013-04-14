@@ -247,24 +247,29 @@ STRUCTURE
 # Need to define unique set of labels for the competition.
 sqrt,I,->,<msqrt xml:id=_I_>,I,</msqrt>
 sqrt,C,->,<msqrt xml:id=_I_>,C,</msqrt>
-\sqrt,CONTAINS,->,<msqrt xml:id=_I_>,CONTAINS,</msqrt>
-\sqrt,I,->,<msqrt xml:id=_I_>,I,</msqrt>
 sqrt,CONTAINS,->,<msqrt xml:id=_I_>,CONTAINS,</msqrt>
+
+\sqrt,I,->,<msqrt xml:id=_I_>,I,</msqrt>
+\sqrt,C,->,<msqrt xml:id=_I_>,C,</msqrt>
+\sqrt,CONTAINS,->,<msqrt xml:id=_I_>,CONTAINS,</msqrt>
 
 # RZ: Addition for nth-roots (e.g. cube roots, March 25)
 sqrt,I,A,->,<mroot xml:id=_I_>,I,A,</mroot>
 sqrt,C,A,->,<mroot xml:id=_I_>,C,A,</mroot>
+sqrt,CONTAINS,A,->,<mroot xml:id=_I_>,CONTAINS,A,</mroot>
+
 \sqrt,I,A,->,<mroot xml:id=_I_>,I,A,</mroot>
 \sqrt,C,A,->,<mroot xml:id=_I_>,C,A,</mroot>
 \sqrt,CONTAINS,A,->,<mroot xml:id=_I_>,CONTAINS,A,</mroot>
-sqrt,CONTAINS,A,->,<mroot xml:id=_I_>,CONTAINS,A,</mroot>
 
 #\int,SUP,SUB,->,<msubsup><mo xml:id=_I_>\int</mo>,SUB,SUP,</msubsup>
 \int,A,B,->,<munderover><mo xml:id=_I_>\int</mo>,B,A,</munderover>
 \sum,SUP,SUB,->,<msubsup><mo xml:id=_I_>\sum</mo>,SUB,SUP,</msubsup>
+\sum,Sup,Sub,->,<msubsup><mo xml:id=_I_>\sum</mo>,Sub,Sup,</msubsup>
 \sum,A,B,->,<munderover><mo xml:id=_I_>\sum</mo>,B,A,</munderover>
 Integral,A,B,->,<munderover><mo xml:id=_I_>\int</mo>,B,A,</munderover>
 Sigma,SUP,SUB,->,<msubsup><mo xml:id=_I_>\sum</mo>,SUB,SUP,</msubsup>
+Sigma,Sup,Sub,->,<msubsup><mo xml:id=_I_>\sum</mo>,Sub,Sup,</msubsup>
 Sigma,A,B,->,<munderover><mo xml:id=_I_>\sum</mo>,B,A,</munderover>
 
 
