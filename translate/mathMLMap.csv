@@ -298,7 +298,11 @@ a,->,<mover>,PARENT,CHILD,</mover>
 B,->,<munder>,PARENT,CHILD,</munder>
 b,->,<munder>,PARENT,CHILD,</munder>
 
-REL_DEFAULT,->,<mrow RELATION_ERROR=_L_>,PARENT,CHILD,</mrow>
+REL_DEFAULT,->,<mrow>,PARENT,CHILD,</mrow>
+
+# This can work, but causes parse failure for CROHMELib tools.
+#REL_DEFAULT,->,<mrow REL_ERROR=_L_>,PARENT,CHILD,</mrow>
+
 
 # Accents
 # ?? Overline handlined by 'below' mapping above for simplicity

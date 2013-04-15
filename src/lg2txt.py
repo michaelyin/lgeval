@@ -127,12 +127,14 @@ def translateRelation(lg, (relation, nextChildId), structureMap, \
 		replacementTuple = structureMap[ relation ]
 	
 	else:
+		sys.stderr.write("  !! Error: Unknown relationship label " + relation + "\n")
+		sys.stderr.write("  !!        Using relationship mapping: " + str(structureMap[ 'REL_DEFAULT' ]) + "\n")
 		# Use default mapping if label is unknown.
 		replacementList = list( structureMap[ 'REL_DEFAULT' ] )
 		for i in range(0,len(replacementList)):
-			replacementList[i] = replacementList[i].replace('_L_', relation)
+			replacementList[i] = replacementList[i].replace('_L_', \
+					relation)
 		replacementTuple = tuple( replacementList )
-		sys.stderr.write("  !! Error: Unknown relationship label " + relation + ".\n")
 	
 	for i in range(0,len(replacementTuple)):
 		nextEntry = replacementTuple[ i ]
@@ -170,7 +172,7 @@ def translate(lg, segId,  segPrimMap, edgeMap,  symbolMap, structureMap):
 		# Treat all unknowns uniformly.
 		nodeString = symbolMap[ 'OBJ_DEFAULT' ].replace('_I_','\"' + \
 				primListString + '\"').replace('_L_',label)
-		sys.stderr.write("  !! Error: Unknown object label " + label + ".\n")
+		sys.stderr.write("  !! Error: Unknown object label " + label + "\n")
 
 	if segId in edgeMap:
 		# This node has children - lookup replacement based on sorted labels
@@ -189,13 +191,18 @@ def translate(lg, segId,  segPrimMap, edgeMap,  symbolMap, structureMap):
 
 			# DEBUG: remove HOR/R relations, separate SUB/SUP relations.
 			# Add missing "Sub" "Sup" labels for CROHME 2013.
+			# DEBUG: Separate undefined labels into the 'noSubSupPairs' note
+			#   that this binds these undefined relationships before any hor.
+			#   adjacency relationship.
 			if not (relation == 'HOR' or relation == 'R'):
 				nodeRelationPairs += [ (nextChildId, relation) ]
 				if not (relation == 'SUB' or relation == 'SUP' or \
-						relation == 'Sub' or relation == 'Sup'):
+						relation == 'Sub' or relation == 'Sup' or
+						not relation in structureMap.keys() and not relation == 'I' ):
 					noSubSupPairs += [ (nextChildId, relation) ]
 				else:
 					subSupPairs += [ (nextChildId, relation) ]
+			
 			else:
 				horRelation += [ (nextChildId, relation) ]
 
