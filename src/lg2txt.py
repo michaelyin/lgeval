@@ -121,28 +121,29 @@ def translateRelation(lg, (relation, nextChildId), structureMap, \
 		segPrimMap, edgeMap, symbolMap, nodeString):
 	"""Translate an individual spatial relation."""
 	relString = ""
+	replacementTuple = ()
+	
 	if relation in structureMap.keys():
 		replacementTuple = structureMap[ relation ]
-
-		for i in range(0,len(replacementTuple)):
-			nextEntry = replacementTuple[ i ]
-			if nextEntry == "PARENT":
-				# Add current symbol at this location
-				relString += nodeString
-			elif nextEntry == "CHILD":
-				relString += translate(lg, nextChildId, segPrimMap, edgeMap, symbolMap, structureMap)
-			else:
-				relString += replacementTuple[i]
-			
-		#relString += replacementTuple[0] \
-		#	+ replacementTuple[1] \
-		#	+ translate(lg, nextChildId, segPrimMap,\
-		#		edgeMap, symbolMap, structureMap) \
-		#	+ replacementTuple[2]
+	
 	else:
-		relString += ' ERR::' + relation + ' { '\
-			+ translate(lg, nextChildId, segPrimMap,\
-				edgeMap, symbolMap, structureMap) + ' } '
+		# Use default mapping if label is unknown.
+		replacementList = list( structureMap[ 'REL_DEFAULT' ] )
+		for i in range(0,len(replacementList)):
+			replacementList[i] = replacementList[i].replace('_L_', relation)
+		replacementTuple = tuple( replacementList )
+		sys.stderr.write("  !! Error: Unknown relationship label " + relation + ".\n")
+	
+	for i in range(0,len(replacementTuple)):
+		nextEntry = replacementTuple[ i ]
+		if nextEntry == "PARENT":
+			# Add current symbol at this location
+			relString += nodeString
+		elif nextEntry == "CHILD":
+			relString += translate(lg, nextChildId, segPrimMap, edgeMap, symbolMap, structureMap)
+		else:
+			relString += replacementTuple[i]
+	
 	return relString
 
 
@@ -155,17 +156,21 @@ def translate(lg, segId,  segPrimMap, edgeMap,  symbolMap, structureMap):
 	labelValuePairs = sorted(lg.nlabels[ oneSegPrimitive ].items(), key=byValue)
 	(label, value) = labelValuePairs[0]
 
-	nodeString = label  # if not in symbolMap, will not be given a seg. id! (ERROR)
+	nodeString = label  
+	
+	# Create label identifying primitives in the object.
+	primListString = ""
+	for primitiveId in sorted(list(segPrimMap[ segId ][0])):
+		primListString += primitiveId + ':'
+	
 	if label in symbolMap:
-		primListString = ""
-		for primitiveId in sorted(list(segPrimMap[ segId ][0])):
-			primListString += primitiveId + ':'
-		#sys.stderr.write(str(symbolMap[label]))
 		nodeString = symbolMap[ label ].replace('_I_','\"' + \
 				primListString + '\"')
-
-	# BASE CASE: leaf node, which will not have an edge to a child node
-	#   in edgeMap; just return the symbol in nodeString.
+	else:
+		# Treat all unknowns uniformly.
+		nodeString = symbolMap[ 'OBJ_DEFAULT' ].replace('_I_','\"' + \
+				primListString + '\"').replace('_L_',label)
+		sys.stderr.write("  !! Error: Unknown object label " + label + ".\n")
 
 	if segId in edgeMap:
 		# This node has children - lookup replacement based on sorted labels
@@ -183,9 +188,11 @@ def translate(lg, segId,  segPrimMap, edgeMap,  symbolMap, structureMap):
 			(relation, value) = labelValuePairs[0]
 
 			# DEBUG: remove HOR/R relations, separate SUB/SUP relations.
+			# Add missing "Sub" "Sup" labels for CROHME 2013.
 			if not (relation == 'HOR' or relation == 'R'):
 				nodeRelationPairs += [ (nextChildId, relation) ]
-				if not (relation == 'SUB' or relation == 'SUP'):
+				if not (relation == 'SUB' or relation == 'SUP' or \
+						relation == 'Sub' or relation == 'Sup'):
 					noSubSupPairs += [ (nextChildId, relation) ]
 				else:
 					subSupPairs += [ (nextChildId, relation) ]

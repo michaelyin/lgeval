@@ -243,6 +243,12 @@ Integral,->,<mo xml:id=_I_>\int</mo>
 # ?? Treating prime (e.g. ' in a') as superscript relative to base.
 \prime,->,<mo xml:id=_I_>\prime</mo>
 
+# Empty square root.
+\sqrt,->,<msqrt xml:id=_I_></msqrt>
+
+# Treat symbol by default as an identifier (_L_ holds symbol label).
+OBJ_DEFAULT,->,<mi xml:id=_I_>_L_</mi>
+
 STRUCTURE
 # Need to define unique set of labels for the competition.
 sqrt,I,->,<msqrt xml:id=_I_>,I,</msqrt>
@@ -291,6 +297,8 @@ A,->,<mover>,PARENT,CHILD,</mover>
 a,->,<mover>,PARENT,CHILD,</mover>
 B,->,<munder>,PARENT,CHILD,</munder>
 b,->,<munder>,PARENT,CHILD,</munder>
+
+REL_DEFAULT,->,<mrow RELATION_ERROR=_L_>,PARENT,CHILD,</mrow>
 
 # Accents
 # ?? Overline handlined by 'below' mapping above for simplicity
