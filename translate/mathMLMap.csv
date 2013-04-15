@@ -293,8 +293,8 @@ sub,->,<msub>,PARENT,CHILD,</msub>
 SUP,->,<msup>,PARENT,CHILD,</msup>
 Sup,->,<msup>,PARENT,CHILD,</msup>
 sup,->,<msup>,PARENT,CHILD,</msup>
-A,->,<mover>,PARENT,CHILD,</mover>
-a,->,<mover>,PARENT,CHILD,</mover>
+A,->,<munder>,CHILD,PARENT</munder>
+a,->,<munder>,CHILD,PARENT</munder>
 B,->,<munder>,PARENT,CHILD,</munder>
 b,->,<munder>,PARENT,CHILD,</munder>
 
