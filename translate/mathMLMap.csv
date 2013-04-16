@@ -158,6 +158,10 @@ subset,->,<mo xml:id=_I_>\subset</mo>
 forall,->,<mo xml:id=_I_>\forall</mo>
 exists,->,<mo xml:id=_I_>\exists</mo>
 
+# Misc
+prime,->,<mo xml:id=_I_>\'</mo>
+\',->,<mo xml:id=_I_>\'</mo>
+
 # Calculus
 \partial,->,<mo xml:id=_I_>\partial</mo>
 partial,->,<mo xml:id=_I_>\partial</mo>
@@ -184,7 +188,9 @@ in,->,<mo xml:id=_I_>\in</mo>
 <,->,<mo xml:id=_I_>\lt</mo>
 >,->,<mo xml:id=_I_>\gt</mo>
 \lt,->,<mo xml:id=_I_>\lt</mo>
+&lt;,->,<mo xml:id=_I_>\lt</mo>
 \gt,->,<mo xml:id=_I_>\gt</mo>
+&gt;,->,<mo xml:id=_I_>\gt</mo>
 
 log,->,<mi xml:id=_I_>\log</mi>
 sin,->,<mi xml:id=_I_>\sin</mi>
