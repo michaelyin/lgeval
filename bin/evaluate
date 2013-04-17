@@ -48,25 +48,27 @@ BNAME=`basename $1`
 truthDir=$2
 ResultsDir=Results_$BNAME
 
-echo "Output Files: $1"
-echo "Ground Truth: $2"
+if ! [ -d $ResultsDir ]
+then
+	mkdir $ResultsDir
+	mkdir $ResultsDir/Metrics
+fi
+
+echo "Output File Directory:  $1"
+echo "Ground Truth Directory: $2"
 echo ""
 
 # Compute all .m metrics outputs (per-file), and .diff results (per-file).
 echo "Evaluating files..."
 PREFIX=res_
-for file in $truthDir/*.lg
+for file in `ls $truthDir/*.lg`
 do
 	FNAME=`basename $file .lg`
 	nextFile=$dir/$FNAME.lg
-	if [ $ResultsDir/Metrics/$FNAME.m -ot $file ] || \
-		[ $ResultsDir/Metrics/$FNAME.m -ot $nextFile ]
+	if  [[ ! -e $ResultsDir/Metrics/$FNAME.m ]]
 	then
-		if [[ $nextFile -ot $file ]]
-		then
-			echo "  >> Converting $FNAME.inkml"
-			crohme2lg.pl $dir/$FNAME.inkml $nextFile
-		fi
+		# NOTE: the script convertCrohmeLg can be used to convert
+		#       crohme .inkml files to .lg files.
 		echo "  >> Comparing $FNAME.lg"
 
 		python $LgEvalDir/src/evallg.py $nextFile $file m > $ResultsDir/Metrics/$FNAME.m
