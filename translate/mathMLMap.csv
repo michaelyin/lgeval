@@ -220,16 +220,23 @@ cdots,->,<mo xml:id=_I_>\cdots</mo>
 
 # Fence symbols (square and angle brackets, parentheses, braces)
 (,->,<mo xml:id=_I_>(</mo>
+\(,->,<mo xml:id=_I_>(</mo>
 lparen,->,<mo xml:id=_I_>(</mo>
 ),->,<mo xml:id=_I_>)</mo>
+\),->,<mo xml:id=_I_>)</mo>
 rparen,->,<mo xml:id=_I_>)</mo>
+
 \{,->,<mo xml:id=_I_>\{</mo>
 \},->,<mo xml:id=_I_>\}</mo>
 {,->,<mo xml:id=_I_>\}</mo>
 },->,<mo xml:id=_I_>\}</mo>
+
 [,->,<mo xml:id=_I_>[</mo>
+\[,->,<mo xml:id=_I_>[</mo>
 lbracket,->,<mo xml:id=_I_>[</mo>
+
 ],->,<mo xml:id=_I_>]</mo>
+\],->,<mo xml:id=_I_>]</mo>
 rbracket,->,<mo xml:id=_I_>]</mo>
 # **Distinguishing from < and > ? [Not initially (RZ)]
 \langle,->,<mo xml:id=_I_>\lt</mo>
