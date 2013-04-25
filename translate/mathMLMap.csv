@@ -6,7 +6,6 @@
 # Note that some symbols have synonymns - these are being
 # mapped to a single output representation:
 # 	- <, \lt, \langle
-# 	- \times, X
 #	- Integral, \int
 #	- Sigma, \sum
 
@@ -117,6 +116,7 @@ Delta,->,<mi xml:id=_I_>\Delta</mi>
 # Other quantities/spaces
 \infty,->,<mi xml:id=_I_>\infty</mi>
 infin,->,<mi xml:id=_I_>\infty</mi>
+infinity,->,<mi xml:id=_I_>\infty</mi>
 \Real,->,<mi xml:id=_I_>\Real</mi>
 
 infty,->,<mi xml:id=_I_>\infty</mi>
@@ -125,6 +125,7 @@ Real,->,<mi xml:id=_I_>\Real</mi>
 # Arithmetic Operators
 +,->,<mo xml:id=_I_>+</mo>
 -,->,<mo xml:id=_I_>-</mo>
+horizontal-line,->,<mo xml:id=_I_>-</mo>
 \pm,->,<mo xml:id=_I_>\pm</mo>
 \div,->,<mo xml:id=_I_>\div</mo>
 !,->,<mo xml:id=_I_>!</mo>
@@ -137,7 +138,7 @@ minus,->,<mo xml:id=_I_>-</mo>
 pm,->,<mo xml:id=_I_>\pm</mo>
 div,->,<mo xml:id=_I_>\div</mo>
 # **Disinguish 'times' from X? [Not initially.]
-times,->,<mo xml:id=_I_>X</mo>
+times,->,<mo xml:id=_I_>\times</mo>
 ast,->,<mo xml:id=_I_>\ast</mo>
 
 # Logical Operators
@@ -184,6 +185,7 @@ in,->,<mo xml:id=_I_>\in</mo>
 \leq,->,<mi xml:id=_I_>\leq</mi>
 \geq,->,<mi xml:id=_I_>\geq</mi>
 =,->,<mo xml:id=_I_>=</mo>
+equals,->,<mo xml:id=_I_>=</mo>
 # !! Note: we have synonymns here; mapping to same MathML objects.
 <,->,<mo xml:id=_I_>\lt</mo>
 >,->,<mo xml:id=_I_>\gt</mo>
@@ -222,9 +224,11 @@ cdots,->,<mo xml:id=_I_>\cdots</mo>
 (,->,<mo xml:id=_I_>(</mo>
 \(,->,<mo xml:id=_I_>(</mo>
 lparen,->,<mo xml:id=_I_>(</mo>
+left-paren,->,<mo xml:id=_I_>(</mo>
 ),->,<mo xml:id=_I_>)</mo>
 \),->,<mo xml:id=_I_>)</mo>
 rparen,->,<mo xml:id=_I_>)</mo>
+right-paren,->,<mo xml:id=_I_>)</mo>
 
 \{,->,<mo xml:id=_I_>\{</mo>
 \},->,<mo xml:id=_I_>\}</mo>
@@ -234,10 +238,12 @@ rparen,->,<mo xml:id=_I_>)</mo>
 [,->,<mo xml:id=_I_>[</mo>
 \[,->,<mo xml:id=_I_>[</mo>
 lbracket,->,<mo xml:id=_I_>[</mo>
+left-bracket,->,<mo xml:id=_I_>[</mo>
 
 ],->,<mo xml:id=_I_>]</mo>
 \],->,<mo xml:id=_I_>]</mo>
 rbracket,->,<mo xml:id=_I_>]</mo>
+right-bracket,->,<mo xml:id=_I_>]</mo>
 # **Distinguishing from < and > ? [Not initially (RZ)]
 \langle,->,<mo xml:id=_I_>\lt</mo>
 \rangle,->,<mo xml:id=_I_>\gt</mo>
@@ -255,11 +261,16 @@ lim,->,<mi xml:id=_I_>\lim</mi>
 Sigma,->,<mo xml:id=_I_>\sum</mo>
 Integral,->,<mo xml:id=_I_>\int</mo>
 
+integral,->,<mo xml:id=_I_>\int</mo>
+
 # ?? Treating prime (e.g. ' in a') as superscript relative to base.
 \prime,->,<mo xml:id=_I_>\prime</mo>
+prime,->,<mo xml:id=_I_>\prime</mo>
+',->,<mo xml:id=_I_>\prime</mo>
 
 # Empty square root.
 \sqrt,->,<msqrt xml:id=_I_></msqrt>
+sqrt,->,<msqrt xml:id=_I_></msqrt>
 
 # Treat symbol by default as an identifier (_L_ holds symbol label).
 OBJ_DEFAULT,->,<mi xml:id=_I_>_L_</mi>
@@ -278,24 +289,36 @@ sqrt,CONTAINS,->,<msqrt xml:id=_I_>,CONTAINS,</msqrt>
 sqrt,I,A,->,<mroot xml:id=_I_>,I,A,</mroot>
 sqrt,C,A,->,<mroot xml:id=_I_>,C,A,</mroot>
 sqrt,CONTAINS,A,->,<mroot xml:id=_I_>,CONTAINS,A,</mroot>
+sqrt,CONTAINS,ABOVE,->,<mroot xml:id=_I_>,CONTAINS,A,</mroot>
 
 \sqrt,I,A,->,<mroot xml:id=_I_>,I,A,</mroot>
 \sqrt,C,A,->,<mroot xml:id=_I_>,C,A,</mroot>
 \sqrt,CONTAINS,A,->,<mroot xml:id=_I_>,CONTAINS,A,</mroot>
+\sqrt,CONTAINS,ABOVE,->,<mroot xml:id=_I_>,CONTAINS,A,</mroot>
 
 #\int,SUP,SUB,->,<msubsup><mo xml:id=_I_>\int</mo>,SUB,SUP,</msubsup>
 \int,A,B,->,<munderover><mo xml:id=_I_>\int</mo>,B,A,</munderover>
+\int,ABOVE,BELOW,->,<munderover><mo xml:id=_I_>\int</mo>,B,A,</munderover>
+\int,BELOW,ABOVE,->,<munderover><mo xml:id=_I_>\int</mo>,B,A,</munderover>
+
 \sum,SUP,SUB,->,<msubsup><mo xml:id=_I_>\sum</mo>,SUB,SUP,</msubsup>
+\sum,SUPER,SUBSC,->,<msubsup><mo xml:id=_I_>\sum</mo>,SUB,SUP,</msubsup>
 \sum,Sup,Sub,->,<msubsup><mo xml:id=_I_>\sum</mo>,Sub,Sup,</msubsup>
 \sum,A,B,->,<munderover><mo xml:id=_I_>\sum</mo>,B,A,</munderover>
+\sum,ABOVE,BELOW,->,<munderover><mo xml:id=_I_>\sum</mo>,B,A,</munderover>
 Integral,A,B,->,<munderover><mo xml:id=_I_>\int</mo>,B,A,</munderover>
+Integral,ABOVE,BELOW,->,<munderover><mo xml:id=_I_>\int</mo>,ABOVE,BELOW,</munderover>
+Integral,SUBSC,SUPER,->,<munderover><mo xml:id=_I_>\int</mo>,SUBSC,SUPER,</munderover>
 Sigma,SUP,SUB,->,<msubsup><mo xml:id=_I_>\sum</mo>,SUB,SUP,</msubsup>
+Sigma,SUPER,SUBSC,->,<msubsup><mo xml:id=_I_>\sum</mo>,SUB,SUP,</msubsup>
 Sigma,Sup,Sub,->,<msubsup><mo xml:id=_I_>\sum</mo>,Sub,Sup,</msubsup>
 Sigma,A,B,->,<munderover><mo xml:id=_I_>\sum</mo>,B,A,</munderover>
+Sigma,ABOVE,BELOW,->,<munderover><mo xml:id=_I_>\sum</mo>,B,A,</munderover>
 
 
 -,A,B,->,<mfrac xml:id=_I_>,A,B,</mfrac>
 -,ABOVE,BELOW,->,<mfrac xml:id=_I_>,ABOVE,BELOW,</mfrac>
+horizontal-line,ABOVE,BELOW,->,<mfrac xml:id=_I_>,ABOVE,BELOW,</mfrac>
 
 R,->,<mrow>,PARENT,CHILD,</mrow>
 r,->,<mrow>,PARENT,CHILD,</mrow>
@@ -305,12 +328,16 @@ _,->,<msub>,PARENT,CHILD,</msub>
 SUB,->,<msub>,PARENT,CHILD,</msub>
 Sub,->,<msub>,PARENT,CHILD,</msub>
 sub,->,<msub>,PARENT,CHILD,</msub>
+SUBSC,->,<msub>,PARENT,CHILD,</msub>
 SUP,->,<msup>,PARENT,CHILD,</msup>
 Sup,->,<msup>,PARENT,CHILD,</msup>
 sup,->,<msup>,PARENT,CHILD,</msup>
+SUPER,->,<msup>,PARENT,CHILD,</msup>
 A,->,<munder>,CHILD,PARENT,</munder>
+ABOVE,->,<munder>,CHILD,PARENT,</munder>
 a,->,<munder>,CHILD,PARENT,</munder>
 B,->,<munder>,PARENT,CHILD,</munder>
+BELOW,->,<munder>,PARENT,CHILD,</munder>
 b,->,<munder>,PARENT,CHILD,</munder>
 
 REL_DEFAULT,->,<mrow>,PARENT,CHILD,</mrow>
