@@ -72,6 +72,13 @@ lg2dot
 lg2mml
 	Create MathML output from a label graph (requires CROHMELib)
 
+lgfilter
+	Removes non-tree edges from a label graph (e.g. to obtain symbol
+	layout trees from fully-inherited DAG graphs for math notation)
+
+lg2lgtree
+	Converts a directory of label graphs using lgfilter (i.e. producing
+	trees as output), writing the output files to another directory.
 
 ----------------------------
   Applications
