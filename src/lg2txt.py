@@ -69,7 +69,7 @@ def readMapFile(fileName):
 
 
 def translateStructure( lg, label, nodeRelationPairs, structureMap,\
-		segPrimMap, edgeMap, symbolMap, segId):
+		segPrimMap, edgeMap, symbolMap, segId, nodeString):
 	"""Generate a string for a given structure."""
 	strString = ""
 	byValue = lambda pair: pair[1]  
@@ -89,6 +89,8 @@ def translateStructure( lg, label, nodeRelationPairs, structureMap,\
 	# Obtain the replacement, provided as an ordered sequence of
 	# regions, giving the order in which to map subregions.
 	key = tuple(queryList)
+	anyKey = tuple(['ANY'] + queryList[1:])
+
 	#print("key: " + str(key))
 	#print(structureMap.keys())
 	if key in structureMap.keys():
@@ -114,6 +116,37 @@ def translateStructure( lg, label, nodeRelationPairs, structureMap,\
 			if not match:
 				strString += replacementTuple[i].replace('_I_','\"' + \
 						primListString + '\"')
+	
+	# HACK!!! Copying and modifying above conditional branch.
+	elif anyKey in structureMap.keys():
+		replacementTuple = structureMap[ anyKey ]
+		#print("replacement: " + str(replacementTuple))
+
+		# Find the node that matches each relation in the passed list,
+		# and generate the appropriate string.
+		for i in range(0,len(replacementTuple)):
+			nextRelation = replacementTuple[ i ]
+
+			match = False
+			for j in range(0,len(nodeRelationPairs)):
+				(childId, relation) = nodeRelationPairs[j]
+				if relation == nextRelation:
+					strString += translate(lg, childId, segPrimMap,\
+							edgeMap, symbolMap, structureMap) 
+					match = True
+					break
+				elif nextRelation == 'PARENT':
+					strString += nodeString
+					match = True
+					break
+
+			# RZ, Jan 2013: allow other tags to be inserted (e.g. at end);
+			# add primitive ids as identifier for symbols with multiple
+			# subregions (e.g. fractions, roots)
+			if not match:
+				strString += replacementTuple[i].replace('_I_','\"' + \
+						primListString + '\"')
+
 
 	return strString
 
@@ -209,13 +242,13 @@ def translate(lg, segId,  segPrimMap, edgeMap,  symbolMap, structureMap):
 
 		# CASE 1: all relations other than HOR/R are in a structure.
 		strString = translateStructure(lg, label, nodeRelationPairs, structureMap,\
-				segPrimMap, edgeMap, symbolMap, segId)
+				segPrimMap, edgeMap, symbolMap, segId, nodeString)
 		if not strString == "":
 			nodeString = strString 
 		else:
 			# CASE 2: only non-SUP/SUB relations are in a structure.
 			strString = translateStructure(lg, label, noSubSupPairs, structureMap,\
-					segPrimMap, edgeMap, symbolMap, segId)
+					segPrimMap, edgeMap, symbolMap, segId, nodeString)
 			if not strString == "":
 				nodeString = strString
 				for (nextChildId, relation) in sorted(subSupPairs, key=byValue):
@@ -230,17 +263,11 @@ def translate(lg, segId,  segPrimMap, edgeMap,  symbolMap, structureMap):
 					nodeString = translateRelation(lg, (relation, nextChildId),\
 							structureMap, segPrimMap, edgeMap, symbolMap, nodeString)
 
-					#nodeString += translateRelation(lg, (relation, nextChildId),\
-					#		structureMap, segPrimMap, edgeMap, symbolMap)
-		
 		# Lastly, generate string for adjacent symbols on the baseline.
 		# **if there are multiple 'HOR' symbols all will be mapped.
 		for (child, relation) in horRelation:
 			nodeString = translateRelation(lg, (relation, child),\
 					structureMap, segPrimMap, edgeMap, symbolMap, nodeString)
-
-			#nodeString += translateRelation(lg, (relation, child),\
-			#		structureMap, segPrimMap, edgeMap, symbolMap )
 
 	return nodeString
 

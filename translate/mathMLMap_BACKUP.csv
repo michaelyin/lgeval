@@ -209,7 +209,6 @@ gt,->,<mo xml:id=_I_>\gt</mo>
 # Punctuation and Elipsis
 # NOTE: COMMA symbol id, and quoting used to avoid problems with using ','
 COMMA,->,"<mo xml:id=_I_>,</mo>"
-",",->,"<mo xml:id=_I_>,</mo>"
 .,->,<mo xml:id=_I_>.</mo>
 dot,->,<mo xml:id=_I_>.</mo>
 cdot,->,<mo xml:id=_I_>.</mo>
@@ -297,15 +296,32 @@ sqrt,CONTAINS,ABOVE,->,<mroot xml:id=_I_>,CONTAINS,A,</mroot>
 \sqrt,CONTAINS,A,->,<mroot xml:id=_I_>,CONTAINS,A,</mroot>
 \sqrt,CONTAINS,ABOVE,->,<mroot xml:id=_I_>,CONTAINS,A,</mroot>
 
+#\int,SUP,SUB,->,<msubsup><mo xml:id=_I_>\int</mo>,SUB,SUP,</msubsup>
+\int,A,B,->,<munderover><mo xml:id=_I_>\int</mo>,B,A,</munderover>
+\int,ABOVE,BELOW,->,<munderover><mo xml:id=_I_>\int</mo>,B,A,</munderover>
+\int,Sub,Sup,->,<msubsup><mo xml:id=_I_>\int</mo>,Sub,Sup,</msubsup>
+
+\sum,SUP,SUB,->,<msubsup><mo xml:id=_I_>\sum</mo>,SUB,SUP,</msubsup>
+\sum,SUPER,SUBSC,->,<msubsup><mo xml:id=_I_>\sum</mo>,SUB,SUP,</msubsup>
+\sum,Sub,Sup,->,<msubsup><mo xml:id=_I_>\sum</mo>,Sub,Sup,</msubsup>
+\sum,A,B,->,<munderover><mo xml:id=_I_>\sum</mo>,B,A,</munderover>
+\sum,ABOVE,BELOW,->,<munderover><mo xml:id=_I_>\sum</mo>,B,A,</munderover>
+
+\int,Sub,Sup,->,<msubsup><mo xml:id=_I_>\int</mo>,Sub,Sup,</msubsup>
+Integral,A,B,->,<munderover><mo xml:id=_I_>\int</mo>,B,A,</munderover>
+Integral,ABOVE,BELOW,->,<munderover><mo xml:id=_I_>\int</mo>,ABOVE,BELOW,</munderover>
+Integral,SUBSC,SUPER,->,<munderover><mo xml:id=_I_>\int</mo>,SUBSC,SUPER,</munderover>
+
+Sigma,SUP,SUB,->,<msubsup><mo xml:id=_I_>\sum</mo>,SUB,SUP,</msubsup>
+Sigma,SUPER,SUBSC,->,<msubsup><mo xml:id=_I_>\sum</mo>,SUB,SUP,</msubsup>
+Sigma,Sup,Sub,->,<msubsup><mo xml:id=_I_>\sum</mo>,Sub,Sup,</msubsup>
+Sigma,A,B,->,<munderover><mo xml:id=_I_>\sum</mo>,B,A,</munderover>
+Sigma,ABOVE,BELOW,->,<munderover><mo xml:id=_I_>\sum</mo>,B,A,</munderover>
+
+
 -,A,B,->,<mfrac xml:id=_I_>,A,B,</mfrac>
 -,ABOVE,BELOW,->,<mfrac xml:id=_I_>,ABOVE,BELOW,</mfrac>
 horizontal-line,ABOVE,BELOW,->,<mfrac xml:id=_I_>,ABOVE,BELOW,</mfrac>
-
-ANY,A,B,->,<munderover>,PARENT,B,A,</munderover>
-ANY,ABOVE,BELOW,->,<munderover>,PARENT,BELOW,ABOVE,</munderover>
-ANY,Sub,Sup,->,<msubsup>,PARENT,Sub,Sup,</msubsup>
-ANY,SUB,SUP,->,<msubsup>,PARENT,SUB,SUP,</msubsup>
-ANY,SUBSC,SUPER,->,<msubsup>,PARENT,SUBSC,SUPER,</msubsup>
 
 R,->,<mrow>,PARENT,CHILD,</mrow>
 r,->,<mrow>,PARENT,CHILD,</mrow>
@@ -334,6 +350,8 @@ REL_DEFAULT,->,<mrow>,PARENT,CHILD,</mrow>
 # Accents
 # ?? Overline handlined by 'below' mapping above for simplicity
 #\overline,->,  
+
+
 # REMOVED from 'whitelist' of CROHME 2013 LaTeX symbols (formatting tags):
 #\left,->,
 #\right,->,

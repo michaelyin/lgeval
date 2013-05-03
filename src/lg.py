@@ -249,6 +249,7 @@ class Lg(object):
 		sstring = ''
 		for nstring in nlist:
 			sstring = sstring + nstring
+		sstring += "\n"
 		for estring in elist:
 			sstring = sstring + estring
 		
