@@ -72,7 +72,32 @@ def printTable( field_width, entries):
 		else:
 			labelFormat += '{0[' + str(i) + ']:>{width}}'
 	print labelFormat.format( entries, width=field_width)
-	
+def histogramm(values):
+        """Compute the histogramm of all values: a dictionnary dict[v]=count"""
+        hist = {}
+        for v in values:
+                if v in hist:
+                        hist[v]+=1
+                else:
+                        hist[v]=1
+        return hist
+
+def printHist(hist,N,field_width):
+        vals = []
+        cumulVals = []
+        cum = 0
+        for i in range(0,N):
+                if i in hist:
+                        vals.append(hist[i])
+                else:
+                        vals.append(0)
+                cum += vals[-1]
+                cumulVals.append(cum)
+        printTable(field_width,  range(0,N))
+        printTable(field_width, vals)
+        printTable(field_width, cumulVals)
+
+
 
 def main():
 	if len(sys.argv) < 2:
@@ -104,9 +129,10 @@ def main():
 			fileList = fileList + [row[1]]
 			continue
 		for i in range(0,len(row),2):
-			if row[i].strip() not in allValues:
-				allValues[row[i].strip()] = []
-			allValues[row[i].strip()] = allValues[row[i].strip()] \
+                        vName =  row[i].strip()
+			if vName not in allValues:
+				allValues[vName] = []
+			allValues[vName] = allValues[vName] \
 					+ [float(row[i+1].strip())]
 		nbEM+=1
 	
@@ -114,9 +140,11 @@ def main():
 	allSum = {}
 	allZeroCount = {}
 	zeroFileList = {}
+        allHist = {}
 	for v in allValues.keys():
 		allSum[v] = sum(allValues[v])
 		#print(str(v) + " = " + str(allSum[v]))
+                allHist[v] = histogramm(allValues[v])
 		allZeroCount[v] = 0
 		for s in range(len(allValues[v])):
 			if allValues[v][s] == 0:
@@ -297,6 +325,9 @@ def main():
 		#	classRate = 100 *float(correctClass)/correctSegments
 		#printTable(fieldWidth,['*Segs-CL', classRate, correctSegments, correctClass, correctSegments - correctClass])
 		print("")
+
+                print ("ERROR HISTOGRAMM AT PRIMITIVE LEVEL")
+                printHist(allHist['D_B'],5,fieldWidth)
 
 
 main()
