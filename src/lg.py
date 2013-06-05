@@ -391,22 +391,34 @@ class Lg(object):
 				# graph - in other words, total error, with all pairs incorrect.
 				# DEBUG: We are trying to define the opposite of the edges
 				# in the other graph in the case of an absent node.
-				allOtherNodes = allNodes.difference(set([primitive]))
+				# allOtherNodes = allNodes.difference(set([primitive]))
+				# ographSegPrimSet = set((sp2[ ps2[primitive] ])[0]).difference(set([primitive]))
+				# ediff = allOtherNodes.difference(ographSegPrimSet)
+				# edgeDiffCount = edgeDiffCount + len(ediff) + \
+						# len(ographSegPrimSet)
+				# segDiffs[primitive] = ( ediff, ographSegPrimSet )
+				
+				#version CROHME
 				ographSegPrimSet = set((sp2[ ps2[primitive] ])[0]).difference(set([primitive]))
-				ediff = allOtherNodes.difference(ographSegPrimSet)
-				edgeDiffCount = edgeDiffCount + len(ediff) + \
-						len(ographSegPrimSet)
+				ediff = set([primitive])
+				edgeDiffCount = edgeDiffCount + len(ographSegPrimSet)
 				segDiffs[primitive] = ( ediff, ographSegPrimSet )
 
 			# DEBUG: don't record differences for a single node.
 			elif len(self.nlabels.keys()) > 1:
 				# Similar, for case where node is missing in lg2.
-				allOtherNodes = allNodes.difference(set([primitive]))
+				# allOtherNodes = allNodes.difference(set([primitive]))
+				# graphSegPrimSet = set((sp1[ ps1[primitive] ])[0]).difference(set([primitive]))
+				# ediff = allOtherNodes.difference(graphSegPrimSet)
+				# segDiffs[primitive] = ( graphSegPrimSet, ediff )
+				# edgeDiffCount = edgeDiffCount + len(ediff) + \
+						# len(graphSegPrimSet)
+
+				#version CROHME
 				graphSegPrimSet = set((sp1[ ps1[primitive] ])[0]).difference(set([primitive]))
-				ediff = allOtherNodes.difference(graphSegPrimSet)
+				ediff = set([primitive])
 				segDiffs[primitive] = ( graphSegPrimSet, ediff )
-				edgeDiffCount = edgeDiffCount + len(ediff) + \
-						len(graphSegPrimSet)
+				edgeDiffCount = edgeDiffCount + len(graphSegPrimSet)
 
 		# Compute metrics 
 		metrics = [ ("SegError", len(sp2.keys()) - len(correctSegments) ) ]
@@ -743,12 +755,12 @@ class Lg(object):
 
 		# Add edges for absent elements, to every node in 
 		# the now-expanded node set.
-		for missingNode in self.absentNodes:
-			for node in self.nlabels.keys():
-				# Do not create self-edges.
-				if not missingNode == node:
-					self.elabels[ ( missingNode, node) ] = { 'ABSENT' : 1.0 }
-					self.absentEdges.add( (missingNode, node) )
+		# for missingNode in self.absentNodes:
+			# for node in self.nlabels.keys():
+				# # Do not create self-edges.
+				# if not missingNode == node:
+					# self.elabels[ ( missingNode, node) ] = { 'ABSENT' : 1.0 }
+					# self.absentEdges.add( (missingNode, node) )
 
 	def matchAbsent(self, lg2):
 		"""Add all missing primitives and edges between this graph and
