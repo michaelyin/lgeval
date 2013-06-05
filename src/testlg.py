@@ -25,6 +25,18 @@ def testInput(testfiles):
 	print("-- TESTING FILE INPUT")
 	loadFiles(testfiles)
 
+def testshortCuts(compareFiles):
+	print('\n--TESTING SHORTCUTS')
+	for next in compareFiles:
+		n1 = Lg(next[0])
+		n2 = Lg(next[1])
+		print('>> ' + next[0] + ' vs. ' + next[1])
+		out1 = n1.compare(n2)
+		if out1[0][8][1] == 0:
+			print ("OK")
+		else:
+			print str(out1)
+
 def labelComparison(file1,file2):
 	print('\n[ Comparing Labels for FILE: ' + file1 + ' and ' + file2 + ' ]')
 	n1 = Lg(file1)
@@ -162,75 +174,81 @@ def testInvertValues(files):
 
 def main():
 	validfiles = [ \
-			'tests/infile1', \
-			'tests/infile2', \
-			'tests/infile3', \
-			'tests/infile4', \
-			'tests/infile5', \
-			'tests/infile10'
+			'Tests/infile1', \
+			'Tests/infile2', \
+			'Tests/infile3', \
+			'Tests/infile4', \
+			'Tests/infile5', \
+			'Tests/infile10'
+		]
+
+	shortCutFiles = [ \
+			('Tests/segment3','Tests/segment3sc'), \
+			('Tests/segment1','Tests/segment1sc'), \
+			('Tests/segment2','Tests/segment2sc')
 		]
 
 	invalidfiles = [ \
-			'tests/infile6', \
-			'tests/infile7', \
-			'tests/infile8', \
-			'tests/infile9'
+			'Tests/infile6', \
+			'Tests/infile7', \
+			'Tests/infile8', \
+			'Tests/infile9'
 		]
 
 	compareFiles = [ \
-			('tests/infile1','tests/infile1a'), \
-			('tests/infile4','tests/infile4a'), \
-			('tests/infile4','tests/infile4b'), \
-			('tests/res_001-equation006.lg','tests/001-equation006.lg')
+			('Tests/infile1','Tests/infile1a'), \
+			('Tests/infile4','Tests/infile4a'), \
+			('Tests/infile4','Tests/infile4b'), \
+			('Tests/res_001-equation006.lg','Tests/001-equation006.lg')
 		]
 
 	segFiles = [ \
-			'tests/infile1', \
-			'tests/infile4', \
-			'tests/infile5', \
-			'tests/segment1', \
-			'tests/segment2', \
-			'tests/segment3', \
-			'tests/segment4', \
-			'tests/segment5', \
-			'tests/segment6'
+			'Tests/infile1', \
+			'Tests/infile4', \
+			'Tests/infile5', \
+			'Tests/segment1', \
+			'Tests/segment2', \
+			'Tests/segment3', \
+			'Tests/segment4', \
+			'Tests/segment5', \
+			'Tests/segment6'
 		]
 
 	compareFilespaper = [ \
-			('tests/paperExampleGT','tests/paperExampleErrA'), \
-			('tests/paperExampleGT','tests/paperExampleErrB'), \
-			('tests/paperExampleGT','tests/paperExampleErrC'), \
-			('tests/paperExampleGT','tests/paperExampleErrD')
+			('Tests/paperExampleGT','Tests/paperExampleErrA'), \
+			('Tests/paperExampleGT','Tests/paperExampleErrB'), \
+			('Tests/paperExampleGT','Tests/paperExampleErrC'), \
+			('Tests/paperExampleGT','Tests/paperExampleErrD')
 		]
 
 	compareEmpty = [ \
-			('tests/infile1','tests/emptyfile'),
-			('tests/infile11','tests/emptyfile'),
-			('tests/infile1','tests/infile11'),
-			('tests/infile1','tests/infile3'),
-			('tests/emptyfile','tests/paperExampleGT'),
+			('Tests/infile1','Tests/emptyfile'),
+			('Tests/infile11','Tests/emptyfile'),
+			('Tests/infile1','Tests/infile11'),
+			('Tests/infile1','Tests/infile3'),
+			('Tests/emptyfile','Tests/paperExampleGT'),
 		]
 
 	mergeFiles = [ \
-			('tests/infile1','tests/infile1'),
-			('tests/infile1','tests/infile11'),
-			('tests/infile4','tests/infile4a'),
-			('tests/infile4','tests/infile4b'),
-			('tests/infile1', 'invalidfile')
+			('Tests/infile1','Tests/infile1'),
+			('Tests/infile1','Tests/infile11'),
+			('Tests/infile4','Tests/infile4a'),
+			('Tests/infile4','Tests/infile4b'),
+			('Tests/infile1', 'invalidfile')
 		]
 		
 	filesForBestBG = [ \
-			'tests/infile4', \
-			'tests/infile5', \
-			'tests/infile5b'
+			'Tests/infile4', \
+			'Tests/infile5', \
+			'Tests/infile5b'
 		]
 	# Input file tests.	
 	# testInput(validfiles)
 	#testInvalidFiles(invalidfiles)
 
 	# Segmentation tests.
-	testSegments(segFiles)
-
+	# testSegments(segFiles)
+	testshortCuts(shortCutFiles)
 	# Comparison tests.
 	#testLabelComparisons(compareFiles)
 	#testLabelComparisons(compareFilespaper)
@@ -246,6 +264,6 @@ def main():
 	# generate all best BG
 	#testGenAllBG(filesForBestBG)
 
-	#testInvertValues( validfiles + [ 'tests/invalidEdgeValue' ] )
+	#testInvertValues( validfiles + [ 'Tests/invalidEdgeValue' ] )
 
 main()

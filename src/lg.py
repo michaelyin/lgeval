@@ -86,6 +86,8 @@ class Lg(object):
 			# CONSTRUCTOR 2: Read graph data from CSV file.
 			MIN_NODE_ENTRY_LENGTH = 3
 			MIN_EDGE_ENTRY_LENGTH = 4
+			MIN_OBJECT_ENTRY_LENGTH = 5
+			MIN_OBJECT_EDGE_ENTRY_LENGTH = 5
 			try:
 				fileReader = csv.reader(open(fileName))
 			except:
@@ -94,7 +96,7 @@ class Lg(object):
 				sys.stderr.write('  !! IO Error (cannot open): ' + fileName + '\n')
 				self.error = True
 				return
-
+			objectDict = dict([])
 			for row in fileReader:
 				# Skip blank lines.
 				if len(row) == 0 or len(row) == 1 and row[0].strip() == '':
@@ -176,13 +178,111 @@ class Lg(object):
 							elabel = row[3].strip()
 							
 							self.elabels[ primPair ] = { elabel : float(row[4]) }
+				elif entryType == 'O':
+					if len(row) < MIN_OBJECT_ENTRY_LENGTH:
+						sys.stderr.write(' !! Invalid object entry length: ' \
+								'\n\t' + str(row) + '\n')
+						self.error = True
+					else:
+						rawnodeList = row[4:] # get all other item as node id
+						oid =  row[1].strip()
+						nlabel =  row[2].strip()
+						nValue =  float(row[3].strip())
+						nodeList = []
+						# add all nodes
+						for n in rawnodeList:
+							nid = n.strip()
+							nodeList.append(nid)
+							if nid in self.nlabels.keys():
+								nlabelDict = self.nlabels[ nid ]
+								if nlabel in nlabelDict:
+									# Note possible error.
+									sys.stderr.write(' !! Repeated node label entry '+str(nid)+'('\
+											+ self.file + '): ' \
+											+ '\n\t' + str(row) + '\n')
+									self.error = True
+								# Add (or replace) entry for the label.
+								nlabelDict[ nlabel ] = nValue
+							else:
+								# New primitive; create new dictionary for 
+								# provided label and value 	
+								# Feb. 2013 - allow no weight to be provided.
+								self.nlabels[ nid ] = { nlabel : nValue }
+						#save the nodes of this object
+						objectDict[oid] = nodeList
+						#add all edges
+						for nid1 in nodeList:
+							#nid1 = n1.strip()
+							for nid2 in nodeList:
+								#nid2 = n2.strip()
+								if nid1 != nid2:
+									primPair = ( nid1, nid2 )
+									elabel = '*' #segmentation
+									if primPair in self.elabels.keys():
+										elabelDict = self.elabels[ primPair ]
+										if elabel in elabelDict:
+											# Note possible error.
+											sys.stderr.write(' !! Repeated edge label entry (' \
+													+ self.file + '):\n\t' + str(row) + '\n')
+											self.error = True
+										else:
+											# Add (or replace) entry for the label.
+											elabelDict[ elabel ] = nValue
+									else:
+										# Add new edge label entry for the new edge label
+										# as a dictionary.
+										self.elabels[ primPair ] = { elabel : nValue }
 
+				elif entryType == 'EO':
+					if len(row) < MIN_OBJECT_EDGE_ENTRY_LENGTH:
+						sys.stderr.write(' !! Invalid object entry length: ' \
+								'\n\t' + str(row) + '\n')
+						self.error = True
+					else:
+						oid1 = row[1].strip()
+						oid2 = row[2].strip()
+						elabel = row[3].strip()
+						eValue = float(row[4].strip())
+						if not oid1 in objectDict:
+							sys.stderr.write(' !! Invalid object id: ' + oid1+\
+								'\n\t' + str(row) + '\n')
+							self.error = True
+						if not oid2 in objectDict:
+							sys.stderr.write(' !! Invalid object id: ' + oid2+\
+								'\n\t' + str(row) + '\n')
+							self.error = True
+						if not self.error:
+							nodeList1 = objectDict[oid1] # get all other item as node id
+							nodeList2 = objectDict[oid2] # get all other item as node id
+
+							for nid1 in nodeList1:
+								for nid2 in nodeList2:
+									if nid1 != nid2:
+										primPair = ( nid1, nid2 )
+										if primPair in self.elabels.keys():
+											elabelDict = self.elabels[ primPair ]
+											if elabel in elabelDict:
+												# Note possible error.
+												sys.stderr.write(' !! Repeated edge label entry (' \
+														+ self.file + '):\n\t' + str(row) + '\n')
+												self.error = True
+											else:
+												# Add (or replace) entry for the label.
+												elabelDict[ elabel ] = eValue
+										else:
+											# Add new edge label entry for the new edge label
+											# as dictionary.
+											self.elabels[ primPair ] = { elabel : eValue }
+									else:			
+										sys.stderr.write('  !! Invalid self-edge (' +
+										self.file + '):\n\t' + str(row) + '\n')
+										self.error = True
 				# DEBUG: complaints about empty lines here...
 				elif len(entryType.strip()) > 0 and entryType.strip()[0] == '#':
 					# Ignore lines with comments.
 					pass
 				else:
-					sys.stderr.write('  !! Invalid graph entry type (expect N/E): ' \
+					sys.stderr.write('  !! Invalid graph entry type (expect N/E/O/OE): ' \
 							+ str(row) + '\n')
 					self.error = True
 	
