@@ -8,6 +8,7 @@ import csv
 import sys
 import math
 import copy
+import smallGraph
 
 class Lg(object):
 	"""Class for bipartite graphs where the two node sets are identical, and
@@ -37,10 +38,11 @@ class Lg(object):
 		fileName = None
 		nodeLabels = {}
 		edgeLabels = {}
+		
 		if len(args) == 1:
 			fileName = args[0]
 			self.file = fileName # DEBUG: add filename for debugging purposes.
-		else:
+		elif len(args) == 2:
 			nodeLabels = args[0]
 			edgeLabels = args[1]
 
@@ -364,7 +366,7 @@ class Lg(object):
 		segments without parents, and edges labeled as segment ('*')."""
 		primitiveSegmentMap = {}
 		segmentPrimitiveMap = {}
-		noparentSegments = []
+		#noparentSegments = []
 		segmentEdges = {}  # Edges between detected objects (segments)
 
 		self.hideUnlabeledEdges()
@@ -375,6 +377,7 @@ class Lg(object):
 			primSets[node] = set([node])
 		for (n1, n2) in self.elabels.keys():
 			if '*' in self.elabels[(n1,n2)].keys():
+				# TODO : sets are mutable object, so primSets[n1].add([2]) it will avoid multiple copy
 				primSets[n1] = primSets[n1].union( set([ n2 ]))
 				primSets[n2] = primSets[n2].union( set([ n1 ]))
 
@@ -404,7 +407,7 @@ class Lg(object):
 
 		# Identify 'root' objects/segments (i.e. with no incoming edges),
 		# and edges between objects. **We skip segmentation edges.
-		segEdges = {}
+		#segEdges = {}
 		for (n1, n2) in self.elabels.keys():
 			segment1 = primitiveSegmentMap[n1]
 			segment2 = primitiveSegmentMap[n2] 
@@ -442,9 +445,10 @@ class Lg(object):
 		pairs on nodes and all incoming and outgoing edges."""
 		(sp1, ps1, _, sre1) = self.segmentGraph()
 		(sp2, ps2, _, sre2) = lg2.segmentGraph()
-		byValue = lambda pair: pair[1]  # define key for sort comparisons.
+		#byValue = lambda pair: pair[1]  # define key for sort comparisons.
 
 		allNodes = set(ps1.keys())
+		#FIX : this this not the case in spare representation 
 		assert allNodes == set(ps2.keys())
 	
 		edgeDiffCount = 0
@@ -523,10 +527,13 @@ class Lg(object):
 		# Compute metrics 
 		metrics = [ ("SegError", len(sp2.keys()) - len(correctSegments) ) ]
 		correctClass = 0
+		# TODO :  the first part 'label' of the couple (label, primSet) is not use in the loop
+		# furthermore it is not a label but segId
 		for (label, primSet) in correctSegments:
 			# Get label for the first primtives (all primitives have identical
 			# labels in a segment).
 			# DEBUG: use only the set of labels, not confidence values.
+			# TODO : why we store the full set 'primSet' as we use only the first id (=sp1)
 			if set(self.nlabels[ list(primSet)[0] ].keys()) == \
 				set(lg2.nlabels[ list(primSet)[0] ].keys()):
 				correctClass += 1
@@ -543,7 +550,7 @@ class Lg(object):
 		# still have valid layouts in some cases.
 		segRelErrors = 0
 		segRelEdgeDiffs = {}
-		segRelMatched = set([])
+		#segRelMatched = set([])
 
 		for thisPair in sre1.keys():
 			thisParentIds = set(sp1[ thisPair[0] ][0])
@@ -562,7 +569,7 @@ class Lg(object):
 						segRelErrors += 1
 						segRelEdgeDiffs[ thisPair ] = [ ('Error',1.0) ]
 						continue
-
+			self.error |= error
 		metrics = metrics + [ ("SegRelError", segRelErrors) ]
 
 		return (edgeDiffCount, segDiffs, correctSegments, metrics, segRelEdgeDiffs)
@@ -577,14 +584,18 @@ class Lg(object):
 		metrics  = []
 		nodeconflicts = []
 		edgeconflicts = []
-		byValue = lambda pair: pair[1]  # define key for sort comparisons.
+		#byValue = lambda pair: pair[1]  # define key for sort comparisons.
 
 		# FIX number of nodes as number in reference (lg2)
 		# For evaluation relative to ground truth, this is more appropriate
 		# than the (possibly expanded) number of targets after resolving
 		# absent nodes in both directions. Does lead to risk of negative
 		# accuracies (more errors than targets).
-		numNodes = len(lg2.nlabels.keys())
+		# FIXED ( HM ) use the union of all nodes label instead of only lg2 ones
+		#    it change the nlabelMismatch, nodeClassError and so D_C and all rates values
+		# numNodes = len(lg2.nlabels.keys())
+		allNodes = set(lg2.nlabels.keys()).union(self.nlabels.keys())
+		numNodes = len(allNodes)
 		(sp2, ps2, _, sre2) = lg2.segmentGraph()
 		nSegRelEdges = len(sre2)
 
@@ -602,8 +613,10 @@ class Lg(object):
 
 		# Mismatched nodes.
 		nodeClassError = set()
-		for nid in self.nlabels.keys():
-			if not set(self.nlabels[nid].keys()) == set(lg2.nlabels[nid].keys()):
+		for nid in allNodes: #self.nlabels.keys():
+			if (not nid in self.nlabels) or \
+			(not nid in lg2.nlabels) or \
+			(not set(self.nlabels[nid].keys()) == set(lg2.nlabels[nid].keys())):
 				nlabelMismatch = nlabelMismatch + 1
 				# Merge labels.
 				thisSet = ''.join(sorted(self.nlabels[nid].keys()))
@@ -987,6 +1000,172 @@ class Lg(object):
 				else:
 					self.elabels[ edge ][ label ] = 1.0 - currentValue
 
+	def subStructIterator(self, nodeNumbers):
+		""" return an iterator which gives all substructures with n nodes
+		n belonging to the list depths"""
+		if(isinstance(nodeNumbers, int)):
+			nodeNumbers = [nodeNumbers]
+		subStruct = []
+		#init the substruct with isolated nodes
+		for n in self.nlabels.keys():
+			subStruct.append(set([n]))
+			if 1 in nodeNumbers:
+				yield smallGraph.SmallGraph([(n, "".join(self.nlabels[n].keys()))], [])
+		#print(subStruct)
+		for d in range(2,max(nodeNumbers)+1):
+					#add one node to each substructure
+			newSubsS = set([])
+			newSubsL = []
+			for sub in subStruct:
+				#print ("  with " + str(sub))
+				le = getEdgesToNeighbours(sub,self.elabels.keys())
+				for (f,to) in le:
+					#print ("    Add? " + str(to))
+					new = sub.union([to])
+					lnew = list(new)
+					lnew.sort()
+					snew = ",".join(lnew)
+					#print ("    Test:" + snew + " in " + str(newSubsS))
+					if(not snew in newSubsS):
+						newSubsS.add(snew)
+						newSubsL.append(new)
+						if d in nodeNumbers:
+#							struc = getEdgesBetweenThem(new, self.elabels.keys())
+#							sg1 = smallGraph.SmallGraph()
+#							for n in new:
+#								sg1.nodes[n] = "".join(self.nlabels[n].keys())
+#							for (a,b) in struc:
+#								sg1.edges[(a,b)] = "".join(self.elabels[(a,b)].keys())
+							yield self.getSubSmallGraph(new)
+						#print ("   Added: " + str(new))
+			subStruct = newSubsL
+			
+	def getSubSmallGraph(self, nodelist):
+		"""return the small graph with the primitive in nodelist and all edges 
+		between them"""
+		sg = smallGraph.SmallGraph()
+		for n in nodelist:
+			sg.nodes[n] = "".join(self.nlabels[n].keys())
+		for e in getEdgesBetweenThem(nodelist,self.elabels.keys()):
+			sg.edges[e] = "".join(self.elabels[e].keys())
+		return sg
+		
+	#compare the substructure
+	def compareSubStruct(self, olg, depths):
+		"""return the list of couple of substructure which disagree"""
+		allerrors = []
+		for struc in self.subStructIterator(depths):
+				sg2 = olg.getSubSmallGraph(struc.nodes.keys())
+				if(not (struc == sg2)):
+					allerrors.append((struc,sg2))
+		return allerrors
+	
+	def compareSegmentsStruct(self, lg2,depths):
+		"""Compute the number of differing segments, and record disagreements
+		in a confusion matrix (histogramm). 
+		The primitives in each graph should be of the same number and names
+		(identifiers). Nodes are merged that have identical (label,value)
+		pairs on nodes and all identical incoming and outgoing edges.
+		the first key value of the matrix is the self obj structure, which
+		gives the structure of the corresponding primitives which is the key
+		to get the error structure"""
+		(sp1, ps1, _, sre1) = self.segmentGraph()
+		(sp2, ps2, _, sre2) = lg2.segmentGraph()
+		#byValue = lambda pair: pair[1]  # define key for sort comparisons.
+
+		allNodes = set(ps1.keys())
+		#FIX : this this not the case in spare representation 
+		assert allNodes == set(ps2.keys())
+	
+		segDiffs = set()
+		correctSegments = set()
+		for primitive in ps1.keys():
+			# Make sure to skip primitives that were missing ('ABSENT'),
+			# as in that case the graphs disagree on all non-identical node
+			# pairs for this primitive, and captured in self.absentEdges.
+			if not 'ABSENT' in self.nlabels[primitive] and \
+					not 'ABSENT' in lg2.nlabels[primitive]:
+				# Obtain sets of primitives sharing a segment for the current
+				# primitive for both graphs.
+				# Each of sp1/sp2 are a map of ( {prim_set}, label ) pairs.
+				segPrimSet1 = sp1[ ps1[primitive] ][0]
+				segPrimSet2 = sp2[ ps2[primitive] ][0]
+				
+				# Only create an entry where there are disagreements.
+				if segPrimSet1 != segPrimSet2:
+					segDiffs.add( ( ps1[primitive], ps2[primitive]) )
+				else:
+					correctSegments.add(ps1[primitive])
+			# DEBUG: don't record differences for a single node.
+			elif len(self.nlabels.keys()) > 1:
+				# If node was missing in this graph or the other, treat 
+				# this graph as having a miss segment
+				# do not count the segment in graph with 1 primitive
+				segDiffs.add(( ps1[primitive], ps2[primitive]) )
+
+		# now check if the labels are identical
+		for seg in correctSegments:
+			# Get label for the first primtives (all primitives have identical
+			# labels in a segment).
+			# DEBUG: use only the set of labels, not confidence values.
+			firstPrim = list(sp1[seg][0])[0]
+			if set(self.nlabels[ firstPrim ].keys()) != set(lg2.nlabels[ firstPrim ].keys()):
+				segDiffs.add(( ps1[primitive], ps2[primitive]) )
+		allSegWithErr = set([p for (p,_) in segDiffs])
+		# start to build the LG at the object level
+		# add nodes for objet with the labels from the first prim
+		lgObj = Lg()
+		for (sid,lprim) in sp1.iteritems():
+			lgObj.nlabels[sid] = self.nlabels[list(lprim[0])[0]]
+
+		# Compute the specific 'segment-level' graph edges that disagree, at the
+		# level of primitive-pairs. This means that invalid segmentations may
+		# still have valid layouts in some cases.
+		# Add also the edges in the smallGraph
+		segEdgeErr = set()
+		for thisPair in sre1.keys():
+			# TODO : check if it sp1[thisPair[0]] instead sp1[thisPair[0]][0]
+			thisParentIds = set(sp1[ thisPair[0] ][0])
+			thisChildIds = set(sp1[thisPair[1] ][0])
+			lgObj.elabels[thisPair] = self.elabels[ (list(thisParentIds)[0], list(thisChildIds)[0])]
+			# A 'correct' edge has the same label between all primitives
+			# in the two segments.
+			# NOTE: we are not checking the consitency of label in each graph
+			#  ie if all labels from thisParentIds to thisChildIds in self are 
+			# the same 
+			for parentId in thisParentIds:
+				for childId in thisChildIds:
+					# DEBUG: compare only label sets, not values.
+					if not (parentId, childId) in lg2.elabels.keys() or \
+					   not set(self.elabels[ (parentId, childId) ].keys())  == \
+							set(lg2.elabels[ (parentId, childId) ].keys()):
+						segEdgeErr.add(thisPair)
+						continue
+		listOfAllError = []
+		for smg in lgObj.subStructIterator(depths):
+			#if one segment is in the segment error set
+			showIt = False
+			if len(set(smg.nodes.keys()).intersection(allSegWithErr)) > 0:
+				showIt = True
+			for pair in smg.edges.keys():
+				if pair in segEdgeErr:
+					showIt = True
+					continue
+			if showIt:
+				#build the smg for the prim from self
+				allPrim = []
+				for s in smg.nodes.keys():
+					allPrim.extend(sp1[s][0])
+				print allPrim
+				smgPrim1 = self.getSubSmallGraph(allPrim)
+				#build the smg for the prim from lg2 
+				allPrim = []
+				for s in smg.nodes.keys():
+					allPrim.extend(sp2[s][0])
+				smgPrim2 = lg2.getSubSmallGraph(allPrim)
+				listOfAllError.append((smg,smgPrim1,smgPrim2))
+
+		return listOfAllError 
 
 ################################################################
 # Utility functions
@@ -1040,3 +1219,19 @@ def mergeMaps(map1, weight1, map2, weight2, combfn):
 				map1[object][label] = weight1 * value
 			map1[object]['_'] = weight2 
 
+
+def getEdgesToNeighbours(nodes,edges):
+	"""return all edges which are coming from one of the nodes to out of these nodes"""
+	neigb = set([])
+	for (n1,n2) in edges:
+		if (n1 in nodes and not n2 in nodes):
+			neigb.add((n1,n2))
+	return neigb
+
+def getEdgesBetweenThem(nodes,edges):
+	"""return all edges which are coming from one of the nodes to out of these nodes"""
+	edg = set([])
+	for (n1,n2) in edges:
+		if (n1 in nodes and n2 in nodes):
+			edg.add((n1,n2))
+	return edg

@@ -7,7 +7,10 @@
 #	June, 2012
 # Copyright (c) 2012, Richard Zanibbi and Harold Mouchere
 ################################################################
-from lg import *
+from lg import Lg
+#import smallGraph
+import SmGrConfMatrix
+
 #from bestBG import *
 
 def loadFiles(testfiles):
@@ -170,7 +173,47 @@ def testInvertValues(files):
 		print(lg1)
 		print(lg1.csv())
 
+def testStructCompare(files):
+	print('\n--TESTING STRUCT COMPARE')
+	print " sub iterator (sizes 1 and 3): "
+	g1 = Lg(files[0][0])
+	for s in g1.subStructIterator([1,3]):
+		print(s)
+	print " sub iterator (sizes 2): "
+	for s in g1.subStructIterator(2):
+		print(s)
+	print " sub comparision :"
+	for ( file1, file2 ) in files:		
+		g1 = Lg(file1)
+		g2 = Lg(file2)
+		print (str(g1.compareSubStruct(g2,4)))
 
+def testSubGraphCounting(files):
+	stat = SmGrConfMatrix.SmDict()
+	mat = SmGrConfMatrix.ConfMatrix()
+	for ( file1, file2 ) in files:		
+		g1 = Lg(file1)
+		for s in g1.subStructIterator([1,2,3,4]):
+			stat.get(s,SmGrConfMatrix.Counter).incr()
+		g2 = Lg(file2)
+		for (gt,er) in g1.compareSubStruct(g2,[2,3]):
+			mat.incr(gt,er)
+		print(g1.compareSegmentsStruct(g2,[2,3]))
+	print "stat from left side expressions:"
+	print stat
+	print "generate HTML in test.html" 
+	out=open('Tests/test.html','w')
+	out.write('<html xmlns="http://www.w3.org/1999/xhtml">')
+	out.write('<h1> Substructure Stat </h1>')
+	out.write(stat.toHTML())
+	print "Confusion matrix when compared with right side ME"
+	print mat
+	out.write('<h1> Substructure Confusion </h1>')
+	mat.toHTML(out)
+	out.write('<h1> Substructure Confusion with at least 1 error </h1>')
+	mat.toHTML(out,1)
+	out.write('</html>')
+	out.close()
 
 def main():
 	validfiles = [ \
@@ -199,7 +242,7 @@ def main():
 			('Tests/infile1','Tests/infile1a'), \
 			('Tests/infile4','Tests/infile4a'), \
 			('Tests/infile4','Tests/infile4b'), \
-			('Tests/res_001-equation006.lg','Tests/001-equation006.lg')
+			#('Tests/res_001-equation006.lg','Tests/001-equation006.lg')
 		]
 
 	segFiles = [ \
@@ -248,12 +291,13 @@ def main():
 
 	# Segmentation tests.
 	# testSegments(segFiles)
-	testshortCuts(shortCutFiles)
+	#testshortCuts(shortCutFiles)
 	# Comparison tests.
 	#testLabelComparisons(compareFiles)
 	#testLabelComparisons(compareFilespaper)
 	#testEmpty(compareEmpty)
-
+	testStructCompare([('Tests/2p2.lg','Tests/2p2a.lg')])
+	testSubGraphCounting(compareFiles) #[('Tests/2p2.lg','Tests/2p2a.lg')])
 	# Extracting trees (layout trees)
 	# testTreeEdges(segFiles)
 

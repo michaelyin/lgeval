@@ -15,13 +15,19 @@ import sys
 import csv
 from lg import *
 from lgio import *
+import SmGrConfMatrix
 
-def runBatch(fileName, defaultFileOrder):
+def runBatch(fileName, defaultFileOrder, confMat):
 	"""Compile metrics for pairs of files provided in a CSV
 	file. Store metrics and errors in separate files."""
 	fileReader = csv.reader(open(fileName))
 	metricStream = open(fileName + '.m','w')
 	diffStream = open(fileName + '.diff','w')
+
+	htmlStream = None
+	matrix = None
+	if confMat:
+		matrix = SmGrConfMatrix.ConfMatrix()
 
 	for row in fileReader:
 		# Skip comments and empty lines.
@@ -42,14 +48,26 @@ def runBatch(fileName, defaultFileOrder):
 			writeMetrics(out, metricStream)
 			diffStream.write('DIFF,' + lgfile1 + ',' + lgfile2 + '\n')
 			writeDiff(out[1], out[3], out[2], diffStream)
+			
+			if confMat:
+				for (gt,er) in lg1.compareSubStruct(lg2,3):
+					matrix.incr(gt,er)
 
+	if confMat:
+		htmlStream = open(fileName + '.html','w')
+		htmlStream.write('<html xmlns="http://www.w3.org/1999/xhtml">')
+		htmlStream.write('<h1> Substructure Confusion Matrix </h1>')
+		htmlStream.write('<p> File :'+fileName+'</p>')
+		matrix.toHTML(htmlStream,3)
+		htmlStream.write('</html>')
+		
 	metricStream.close()
 	diffStream.close()
 		
 def main():
 	if len(sys.argv) < 3:
 		print("Usage: [[python]] evallg.py <file1.lg> <file2.lg> [diff/*]")
-		print("   OR  [[python]] evallg.py [batch] <filepair_list> [GT-FIRST]")
+		print("   OR  [[python]] evallg.py [batch] <filepair_list> [GT-FIRST] [MAT]")
 		print("")
 		print("    For the first usage, return error metrics and differences")
 		print("    for  label graphs in file1.lg and file2.lg.")
@@ -73,10 +91,14 @@ def main():
 	if sys.argv[1] == "batch":
 		# If requested, swap arguments.
 		defaultFileOrder = True
-		if len(sys.argv) > 3:
+		confMat = False
+		if len(sys.argv) > 3 and "GT-FIRST" in sys.argv:
 			print(">> Treating 1st column as ground truth.")
 			defaultFileOrder = False
-		runBatch(sys.argv[2], defaultFileOrder)
+		if len(sys.argv) > 3 and "MAT" in sys.argv:
+			print(">> Compute the confusion matrix.")
+			confMat = True
+		runBatch(sys.argv[2], defaultFileOrder, confMat)
 
 	else:
 		# Running for a pair of files: require default order of arguments.

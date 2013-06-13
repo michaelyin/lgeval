@@ -161,7 +161,8 @@ def main():
 	#sys.stderr.write( str( zeroFileList[ "D_B" ] ) )
 	correctExps2 = int(allZeroCount["D_E(%)"])
 	#sys.stdout.write( str( zeroFileList[ "D_E" ] ) )
-	assert correctExps == correctExps2
+	if(not correctExps == correctExps2):
+		sys.stderr.write( "Warning : correctExps != correctExps2 (" + str(correctExps) + " vs " + str(correctExps2)+")")
 
 	nodes = int(allSum["nNodes"])
 	dcTotal = int(allSum["D_C"])
