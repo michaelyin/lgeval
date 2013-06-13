@@ -191,6 +191,7 @@ def testStructCompare(files):
 def testSubGraphCounting(files):
 	stat = SmGrConfMatrix.SmDict()
 	mat = SmGrConfMatrix.ConfMatrix()
+        segMat = SmGrConfMatrix.ConfMatrixObject()
 	for ( file1, file2 ) in files:		
 		g1 = Lg(file1)
 		for s in g1.subStructIterator([1,2,3,4]):
@@ -198,12 +199,13 @@ def testSubGraphCounting(files):
 		g2 = Lg(file2)
 		for (gt,er) in g1.compareSubStruct(g2,[2,3]):
 			mat.incr(gt,er)
-		print(g1.compareSegmentsStruct(g2,[2,3]))
+		for (seg,gt,er) in g1.compareSegmentsStruct(g2,[2,3]):
+                        segMat.incr(seg,gt,er)
 	print "stat from left side expressions:"
 	print stat
 	print "generate HTML in test.html" 
 	out=open('Tests/test.html','w')
-	out.write('<html xmlns="http://www.w3.org/1999/xhtml">')
+        out.write('<html xmlns="http://www.w3.org/1999/xhtml">')
 	out.write('<h1> Substructure Stat </h1>')
 	out.write(stat.toHTML())
 	print "Confusion matrix when compared with right side ME"
@@ -212,8 +214,11 @@ def testSubGraphCounting(files):
 	mat.toHTML(out)
 	out.write('<h1> Substructure Confusion with at least 1 error </h1>')
 	mat.toHTML(out,1)
+	out.write('<h1> Substructure Confusion at oject level with at least 1 error  </h1>')
+	segMat.toHTML(out)
 	out.write('</html>')
 	out.close()
+
 
 def main():
 	validfiles = [ \
@@ -239,9 +244,15 @@ def main():
 		]
 
 	compareFiles = [ \
+                #only errors with labels
 			('Tests/infile1','Tests/infile1a'), \
 			('Tests/infile4','Tests/infile4a'), \
 			('Tests/infile4','Tests/infile4b'), \
+                        # only errors with seg and layout
+                        ('Tests/segment6','Tests/segment6erra'),\
+                        ('Tests/segment6','Tests/segment6errb'),\
+                        ('Tests/segment5','Tests/segment5erra'),\
+                        ('Tests/segment5','Tests/segment5errb')
 			#('Tests/res_001-equation006.lg','Tests/001-equation006.lg')
 		]
 

@@ -111,10 +111,13 @@ class ConfMatrix(object):
 		outputStream.write('</table>\n<p>')
 
 	def toHTML(self, outputStream, limit = 0):
+                """ write in the output stream the HTML code for this matrix and
+                return the number of non shown errors"""
 		outputStream.write(' <table border="1"><tr>')
 		arrow = True
 		hiddenErr = 0
 		sortedList = []
+                # first count all error for each sub structure
 		for (rowG,col) in self.mat.getIter():
 			nbE = sum([v.get() for (_,v) in col.getIter()])
 			sortedList.append((rowG,col,nbE))
@@ -137,7 +140,48 @@ class ConfMatrix(object):
 				hiddenErr = hiddenErr + nbE
 		outputStream.write('</table><p> Total hidden errors : ')
 		outputStream.write(str(hiddenErr) + '</p>')
+                return hiddenErr
 		
 		
+class ConfMatrixObject(object):
+	
+	def __init__(self,*args):
+		self.mat = SmDict()
+	
+	def incr(self, obj, row, column):
+		self.mat.get(obj, ConfMatrix).incr(row, column)
 
+	def __str__(self):
+		return str(self.mat)
+
+
+	def toHTML(self, outputStream, limit = 0):
+                """ write in the output stream the HTML code for this matrix and
+                use the ConfMatrix.toHTML to write the submatrices"""
+                outputStream.write(' <table border="2"><tr>')
+		arrow = True
+		hiddenErr = 0
+		sortedList = []
+                # first count all errors for each object (over the full sub matrix)
+		for (obj,errmat) in self.mat.getIter():
+			nbE = 0
+                        for (_,c) in errmat.mat.getIter():
+                                nbE = nbE + sum([v.get() for (_,v) in c.getIter()])
+			sortedList.append((obj,errmat,nbE))
+		sortedList = sorted(sortedList, key=itemgetter(2), reverse=True)
+
+		for (obj,errmat,nbE) in sortedList:
+			if nbE > limit:
+				outputStream.write('<tr><th>\n')
+				outputStream.write(obj.toSVG(200,arrow))
+				outputStream.write( 'Total err = '+str(nbE)+'</th><td>')
+				arrow = False
+                                
+				hiddenErr = hiddenErr + errmat.toHTML(outputStream,limit)
+				outputStream.write('</td></tr>\n')
+			else:
+				hiddenErr = hiddenErr + nbE
+		outputStream.write('</table><p> Total hidden errors : ')
+		outputStream.write(str(hiddenErr) + '</p>')
+		
 	
