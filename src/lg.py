@@ -1156,12 +1156,12 @@ class Lg(object):
 				allPrim = []
 				for s in smg.nodes.keys():
 					allPrim.extend(sp1[s][0])
-				print allPrim
+				#print allPrim
 				smgPrim1 = self.getSubSmallGraph(allPrim)
 				#build the smg for the prim from lg2 
-				allPrim = []
-				for s in smg.nodes.keys():
-					allPrim.extend(sp2[s][0])
+				#allPrim = []
+				#for s in smg.nodes.keys():
+				#	allPrim.extend(sp2[s][0])
 				smgPrim2 = lg2.getSubSmallGraph(allPrim)
 				listOfAllError.append((smg,smgPrim1,smgPrim2))
 

@@ -17,7 +17,7 @@ from lg import *
 from lgio import *
 import SmGrConfMatrix
 
-def runBatch(fileName, defaultFileOrder, confMat):
+def runBatch(fileName, defaultFileOrder, confMat, confMatObj):
 	"""Compile metrics for pairs of files provided in a CSV
 	file. Store metrics and errors in separate files."""
 	fileReader = csv.reader(open(fileName))
@@ -26,8 +26,11 @@ def runBatch(fileName, defaultFileOrder, confMat):
 
 	htmlStream = None
 	matrix = None
+        matrixObj = None
 	if confMat:
 		matrix = SmGrConfMatrix.ConfMatrix()
+        if confMatObj:
+                matrixObj = SmGrConfMatrix.ConfMatrixObject()
 
 	for row in fileReader:
 		# Skip comments and empty lines.
@@ -50,16 +53,27 @@ def runBatch(fileName, defaultFileOrder, confMat):
 			writeDiff(out[1], out[3], out[2], diffStream)
 			
 			if confMat:
-				for (gt,er) in lg1.compareSubStruct(lg2,3):
+				for (gt,er) in lg1.compareSubStruct(lg2,[2,3]):
 					matrix.incr(gt,er)
-
-	if confMat:
+                        if confMatObj:
+				for (obj,gt,er) in lg1.compareSegmentsStruct(lg2,[2,3]):
+					matrixObj.incr(obj,gt,er)
+                        
+        htmlStream = None
+	if confMat or confMatObj:
 		htmlStream = open(fileName + '.html','w')
 		htmlStream.write('<html xmlns="http://www.w3.org/1999/xhtml">')
-		htmlStream.write('<h1> Substructure Confusion Matrix </h1>')
-		htmlStream.write('<p> File :'+fileName+'</p>')
+		htmlStream.write('<h1> File :'+fileName+'</h1>')
+                htmlStream.write('<p>Only errors with at least 3 occurrences appear</p>')
+	if confMat:
+		htmlStream.write('<h2> Substructure Confusion Matrix </h2>')
 		matrix.toHTML(htmlStream,3)
+	if confMatObj:
+		htmlStream.write('<h2> Substructure Confusion Matrix at Object level </h2>')
+		matrixObj.toHTML(htmlStream,3)
+	if confMat or confMatObj:
 		htmlStream.write('</html>')
+                htmlStream.close()
 		
 	metricStream.close()
 	diffStream.close()
@@ -67,7 +81,7 @@ def runBatch(fileName, defaultFileOrder, confMat):
 def main():
 	if len(sys.argv) < 3:
 		print("Usage: [[python]] evallg.py <file1.lg> <file2.lg> [diff/*]")
-		print("   OR  [[python]] evallg.py [batch] <filepair_list> [GT-FIRST] [MAT]")
+		print("   OR  [[python]] evallg.py [batch] <filepair_list> [GT-FIRST] [MAT] [MATOBJ]")
 		print("")
 		print("    For the first usage, return error metrics and differences")
 		print("    for  label graphs in file1.lg and file2.lg.")
@@ -79,10 +93,16 @@ def main():
 		print("    A CSV file containing metrics for all comparisons is written")
 		print("    to \"filepair_list.m\", and differences are written to a file")
 		print("    \"filepair_list.diff\". By default ground truth is listed")
-		print("    second on each line of the batch file; any third argument")
+		print("    second on each line of the batch file; GT-FIRST as third argument")
 		print("    will result in the first element of each line being treated")
 		print("    as ground truth - this does not affect metrics (.m), but does")
 		print("    affect difference (.diff) output.")
+		print("    The MAT or MATOBJ option will create a HTML file with confusion Matrix")
+		print("    between substructure.")
+		print("    MAT will produce the subtructure at stroke level.")
+		print("    MATOBJ will produce the subtructure at object level.")
+                print("     (in both cases, the size of substructure is 2 or 3 nodes,")
+                print("      in both cases, only errors with at least 3 occurrences appear)")
 		sys.exit(0)
 
 	showErrors = True
@@ -92,13 +112,17 @@ def main():
 		# If requested, swap arguments.
 		defaultFileOrder = True
 		confMat = False
+                confMatObj = False
 		if len(sys.argv) > 3 and "GT-FIRST" in sys.argv:
 			print(">> Treating 1st column as ground truth.")
 			defaultFileOrder = False
 		if len(sys.argv) > 3 and "MAT" in sys.argv:
-			print(">> Compute the confusion matrix.")
+			print(">> Compute the confusion matrix at primitive level.")
 			confMat = True
-		runBatch(sys.argv[2], defaultFileOrder, confMat)
+		if len(sys.argv) > 3 and "MATOBJ" in sys.argv:
+			print(">> Compute the confusion matrix at object level.")
+			confMatObj = True
+		runBatch(sys.argv[2], defaultFileOrder, confMat, confMatObj)
 
 	else:
 		# Running for a pair of files: require default order of arguments.
