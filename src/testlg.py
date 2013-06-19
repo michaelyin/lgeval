@@ -198,9 +198,9 @@ def testSubGraphCounting(files):
 			stat.get(s,SmGrConfMatrix.Counter).incr()
 		g2 = Lg(file2)
 		for (gt,er) in g1.compareSubStruct(g2,[2,3]):
-			mat.incr(gt,er)
+			mat.incr(gt,er,("../"+file2))
 		for (seg,gt,er) in g1.compareSegmentsStruct(g2,[2,3]):
-                        segMat.incr(seg,gt,er)
+                        segMat.incr(seg,gt,er,("../"+file2))
 	print "stat from left side expressions:"
 	print stat
 	print "generate HTML in test.html" 
@@ -214,7 +214,7 @@ def testSubGraphCounting(files):
 	mat.toHTML(out)
 	out.write('<h1> Substructure Confusion with at least 1 error </h1>')
 	mat.toHTML(out,1)
-	out.write('<h1> Substructure Confusion at oject level with at least 1 error  </h1>')
+	out.write('<h1> Substructure Confusion at oject level with 1 error or more </h1>')
 	segMat.toHTML(out)
 	out.write('</html>')
 	out.close()

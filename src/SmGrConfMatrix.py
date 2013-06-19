@@ -56,16 +56,33 @@ class SmDict(object):
 
 class Counter(object):
 	""" just a small counter but embedded in an object
-	Designed to be used in smDict"""
+	Designed to be used in smDict
+        It can save a list of object by adding it as param in the 
+        incr() function"""
 	
 	def __init__(self,*args):
 		self.value = 0
-	def incr(self):
+                self.list = []
+                if(len(args)> 0):
+                        self.value = int(args[0])
+                        if (len(args) == 2):
+                                self.list = args[1]
+	def incr(self,elem=None):
 		self.value = self.value +1
+                if elem != None:
+                        self.list.append(elem)
 	def get(self):
 		return self.value
 	def set(self,v):
 		self.value = int(v)
+        def getList(self):
+                return self.list
+        def add(self,c2):
+                return Counter(self.value + c2.value, self.list + c2.list)
+
+        def __add__(self,c2):
+                return Counter(self.value + c2.value, self.list + c2.list)
+
 	def __str__(self):
 		return str(self.value)
 	def __int__(self):
@@ -78,8 +95,10 @@ class ConfMatrix(object):
 	def __init__(self,*args):
 		self.mat = SmDict()
 	
-	def incr(self, row, column):
-		self.mat.get(row, SmDict).get(column,Counter).incr()
+	def incr(self, row, column,elem=None):
+                """ add 1 (one) to the counter indexed by row and column
+                an object can be added in the attached list"""
+		self.mat.get(row, SmDict).get(column,Counter).incr(elem)
 	def __str__(self):
 		return str(self.mat)
 	def toHTMLfull(self, outputStream):
@@ -110,18 +129,21 @@ class ConfMatrix(object):
 			outputStream.write('</tr>\n')
 		outputStream.write('</table>\n<p>')
 
-	def toHTML(self, outputStream, limit = 0):
+	def toHTML(self, outputStream, limit = 0, viewerURL=""):
                 """ write in the output stream the HTML code for this matrix and
-                return the number of non shown errors"""
+                return a Counter object with
+                the number of non shown errors and the list of hidden elements
+                The list of files with error is prefixed with the param viewerURL
+                in the href attribute."""
 		outputStream.write(' <table border="1"><tr>')
 		arrow = True
-		hiddenErr = 0
+		hiddenErr = Counter()
 		sortedList = []
                 # first count all error for each sub structure
 		for (rowG,col) in self.mat.getIter():
-			nbE = sum([v.get() for (_,v) in col.getIter()])
+			nbE = sum([v for (_,v) in col.getIter()],Counter())
 			sortedList.append((rowG,col,nbE))
-		sortedList = sorted(sortedList, key=itemgetter(2), reverse=True)
+		sortedList = sorted(sortedList, key=lambda t:t[2].get(), reverse=True)
 		for (rowG,col,nbE) in sortedList:
 			if nbE > limit:
 				outputStream.write('<tr><th>\n')
@@ -132,14 +154,20 @@ class ConfMatrix(object):
 					if v.get() > limit:
 						outputStream.write('<td>')
 						outputStream.write(g.toSVG(100,arrow))
-						outputStream.write('<h2>'+str(v) + '</h2></td>')
+                                                viewStr = ""
+                                                if(len(v.getList())> 0):
+                                                        viewStr = '<a href="' + (",").join(v.getList())+'"> View </a>'
+						outputStream.write('<h2>'+str(v) + '</h2>'+viewStr+'</td>')
 					else:
-						hiddenErr = hiddenErr + v.get()
+						hiddenErr = hiddenErr + v
 				outputStream.write('</tr>\n')
 			else:
 				hiddenErr = hiddenErr + nbE
-		outputStream.write('</table><p> Total hidden errors : ')
-		outputStream.write(str(hiddenErr) + '</p>')
+                outputStream.write('</table><p> Total hidden errors : ')
+                viewStr = ""
+                if(len(hiddenErr.getList())> 0):
+                        viewStr = '<a href="' + (",").join(hiddenErr.getList())+'"> View </a>'
+		outputStream.write(str(hiddenErr) + viewStr + '</p>')
                 return hiddenErr
 		
 		
@@ -148,27 +176,29 @@ class ConfMatrixObject(object):
 	def __init__(self,*args):
 		self.mat = SmDict()
 	
-	def incr(self, obj, row, column):
-		self.mat.get(obj, ConfMatrix).incr(row, column)
+	def incr(self, obj, row, column,elem=None):
+		self.mat.get(obj, ConfMatrix).incr(row, column,elem)
 
 	def __str__(self):
 		return str(self.mat)
 
 
-	def toHTML(self, outputStream, limit = 0):
+	def toHTML(self, outputStream, limit = 0,viewerURL=""):
                 """ write in the output stream the HTML code for this matrix and
-                use the ConfMatrix.toHTML to write the submatrices"""
+                use the ConfMatrix.toHTML to write the submatrices.
+                The list of files with error is prefixed with the param viewerURL
+                in the href attribute. """
                 outputStream.write(' <table border="2"><tr>')
 		arrow = True
-		hiddenErr = 0
+		hiddenErr = Counter()
 		sortedList = []
                 # first count all errors for each object (over the full sub matrix)
 		for (obj,errmat) in self.mat.getIter():
-			nbE = 0
+			nbE = Counter()
                         for (_,c) in errmat.mat.getIter():
-                                nbE = nbE + sum([v.get() for (_,v) in c.getIter()])
+                                nbE = nbE + sum([v for (_,v) in c.getIter()], Counter())
 			sortedList.append((obj,errmat,nbE))
-		sortedList = sorted(sortedList, key=itemgetter(2), reverse=True)
+		sortedList = sorted(sortedList, key=lambda t:t[2].get(), reverse=True)
 
 		for (obj,errmat,nbE) in sortedList:
 			if nbE > limit:
@@ -176,12 +206,14 @@ class ConfMatrixObject(object):
 				outputStream.write(obj.toSVG(200,arrow))
 				outputStream.write( 'Total err = '+str(nbE)+'</th><td>')
 				arrow = False
-                                
-				hiddenErr = hiddenErr + errmat.toHTML(outputStream,limit)
+				hiddenErr = hiddenErr + errmat.toHTML(outputStream,limit, viewerURL)
 				outputStream.write('</td></tr>\n')
 			else:
 				hiddenErr = hiddenErr + nbE
 		outputStream.write('</table><p> Total hidden errors : ')
-		outputStream.write(str(hiddenErr) + '</p>')
+                viewStr = ""
+                if(len(hiddenErr.getList())> 0):
+                        viewStr = '<a href="' + viewerURL+ (",").join(hiddenErr.getList())+'"> View </a>'
+		outputStream.write(str(hiddenErr) + viewStr + '</p>')
 		
 	

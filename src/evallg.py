@@ -54,10 +54,10 @@ def runBatch(fileName, defaultFileOrder, confMat, confMatObj):
 			
 			if confMat:
 				for (gt,er) in lg1.compareSubStruct(lg2,[2,3]):
-					matrix.incr(gt,er)
+					matrix.incr(gt,er,lgfile2)
                         if confMatObj:
 				for (obj,gt,er) in lg1.compareSegmentsStruct(lg2,[2,3]):
-					matrixObj.incr(obj,gt,er)
+					matrixObj.incr(obj,gt,er,lgfile2)
                         
         htmlStream = None
 	if confMat or confMatObj:
