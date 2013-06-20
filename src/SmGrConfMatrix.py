@@ -75,8 +75,11 @@ class Counter(object):
 		return self.value
 	def set(self,v):
 		self.value = int(v)
-        def getList(self):
-                return self.list
+        def getList(self,unique = True):
+                if unique:
+                        return list(set(self.list))
+                else:
+                        return self.list
         def add(self,c2):
                 return Counter(self.value + c2.value, self.list + c2.list)
 
@@ -135,6 +138,7 @@ class ConfMatrix(object):
                 the number of non shown errors and the list of hidden elements
                 The list of files with error is prefixed with the param viewerURL
                 in the href attribute."""
+                #print "limit="+str(limit)
 		outputStream.write(' <table border="1"><tr>')
 		arrow = True
 		hiddenErr = Counter()
@@ -145,28 +149,35 @@ class ConfMatrix(object):
 			sortedList.append((rowG,col,nbE))
 		sortedList = sorted(sortedList, key=lambda t:t[2].get(), reverse=True)
 		for (rowG,col,nbE) in sortedList:
-			if nbE > limit:
+                        #print str(nbE) + " > " + str(limit) + " = " + str(nbE > limit) + str(nbE.__class__)
+			if int(nbE) > limit:
+                                #print "  OK"
 				outputStream.write('<tr><th>\n')
 				outputStream.write(rowG.toSVG(100,arrow))
 				outputStream.write( 'Total err = '+str(nbE)+'</th>')
 				arrow = False
+                                locHiddenErr = Counter()
 				for (g,v) in col.getIter():
 					if v.get() > limit:
 						outputStream.write('<td>')
 						outputStream.write(g.toSVG(100,arrow))
                                                 viewStr = ""
                                                 if(len(v.getList())> 0):
-                                                        viewStr = '<a href="' + (",").join(v.getList())+'"> View </a>'
+                                                        viewStr = '<a href="'+viewerURL + (",").join(v.getList())+'"> View </a>'
 						outputStream.write('<h2>'+str(v) + '</h2>'+viewStr+'</td>')
 					else:
-						hiddenErr = hiddenErr + v
+						locHiddenErr = locHiddenErr + v
+                                if(len(locHiddenErr.getList())> 0):
+                                        outputStream.write('<td><a href="' +viewerURL+ (",").join(locHiddenErr.getList())+'"> View other Err </a></td>')
+                                hiddenErr = hiddenErr + locHiddenErr 
 				outputStream.write('</tr>\n')
 			else:
-				hiddenErr = hiddenErr + nbE
+				hiddenErr = hiddenErr + nbE 
+                               
                 outputStream.write('</table><p> Total hidden errors : ')
                 viewStr = ""
                 if(len(hiddenErr.getList())> 0):
-                        viewStr = '<a href="' + (",").join(hiddenErr.getList())+'"> View </a>'
+                        viewStr = '<a href="' +viewerURL+ (",").join(hiddenErr.getList())+'"> View </a>'
 		outputStream.write(str(hiddenErr) + viewStr + '</p>')
                 return hiddenErr
 		
@@ -201,7 +212,7 @@ class ConfMatrixObject(object):
 		sortedList = sorted(sortedList, key=lambda t:t[2].get(), reverse=True)
 
 		for (obj,errmat,nbE) in sortedList:
-			if nbE > limit:
+			if int(nbE) > limit:
 				outputStream.write('<tr><th>\n')
 				outputStream.write(obj.toSVG(200,arrow))
 				outputStream.write( 'Total err = '+str(nbE)+'</th><td>')

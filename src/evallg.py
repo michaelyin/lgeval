@@ -17,6 +17,8 @@ from lg import *
 from lgio import *
 import SmGrConfMatrix
 
+INKMLVIEWER = "inkml_viewer/index.xhtml?path=../testdata/&files="
+
 def runBatch(fileName, defaultFileOrder, confMat, confMatObj):
 	"""Compile metrics for pairs of files provided in a CSV
 	file. Store metrics and errors in separate files."""
@@ -42,6 +44,9 @@ def runBatch(fileName, defaultFileOrder, confMat, confMatObj):
 				lgfile2 = lgfile1
 				lgfile1 = temp
 			print ("Test: "+lgfile1+" vs. "+lgfile2);
+                        toShow = lgfile1
+                        if len(row)> 2:
+                                toShow = row[2].strip()
 			# Here lg1 is the output, and lg2 the ground truth.
 			lg1 = Lg(lgfile1)
 			lg2 = Lg(lgfile2)
@@ -54,10 +59,10 @@ def runBatch(fileName, defaultFileOrder, confMat, confMatObj):
 			
 			if confMat:
 				for (gt,er) in lg1.compareSubStruct(lg2,[2,3]):
-					matrix.incr(gt,er,lgfile2)
+					matrix.incr(gt,er,toShow)
                         if confMatObj:
 				for (obj,gt,er) in lg1.compareSegmentsStruct(lg2,[2,3]):
-					matrixObj.incr(obj,gt,er,lgfile2)
+					matrixObj.incr(obj,gt,er,toShow)
                         
         htmlStream = None
 	if confMat or confMatObj:
@@ -67,10 +72,10 @@ def runBatch(fileName, defaultFileOrder, confMat, confMatObj):
                 htmlStream.write('<p>Only errors with at least 3 occurrences appear</p>')
 	if confMat:
 		htmlStream.write('<h2> Substructure Confusion Matrix </h2>')
-		matrix.toHTML(htmlStream,3)
+		matrix.toHTML(htmlStream,3,INKMLVIEWER)
 	if confMatObj:
 		htmlStream.write('<h2> Substructure Confusion Matrix at Object level </h2>')
-		matrixObj.toHTML(htmlStream,3)
+		matrixObj.toHTML(htmlStream,3,INKMLVIEWER)
 	if confMat or confMatObj:
 		htmlStream.write('</html>')
                 htmlStream.close()
@@ -90,6 +95,8 @@ def main():
 		print("")
 		print("    For the second usage, a file is provided containing pairs of")
 		print("    label graph files, one per line (e.g. 'file1, GTruth').")
+		print("    A third optional column contains the file name which should be")
+		print("    linked to the error viewer")
 		print("    A CSV file containing metrics for all comparisons is written")
 		print("    to \"filepair_list.m\", and differences are written to a file")
 		print("    \"filepair_list.diff\". By default ground truth is listed")

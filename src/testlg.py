@@ -184,23 +184,23 @@ def testStructCompare(files):
 		print(s)
 	print " sub comparision :"
 	for ( file1, file2 ) in files:		
-		g1 = Lg(file1)
-		g2 = Lg(file2)
-		print (str(g1.compareSubStruct(g2,4)))
+		g1 = Lg(file1) # ground-truth
+		g2 = Lg(file2) # output
+		print (str(g2.compareSubStruct(g1,4)))
 
 def testSubGraphCounting(files):
 	stat = SmGrConfMatrix.SmDict()
 	mat = SmGrConfMatrix.ConfMatrix()
         segMat = SmGrConfMatrix.ConfMatrixObject()
-	for ( file1, file2 ) in files:		
-		g1 = Lg(file1)
-		for s in g1.subStructIterator([1,2,3,4]):
+	for ( fileGT, fileOUT ) in files:		
+		gGT = Lg(fileGT)
+		for s in gGT.subStructIterator([1,2,3,4]):
 			stat.get(s,SmGrConfMatrix.Counter).incr()
-		g2 = Lg(file2)
-		for (gt,er) in g1.compareSubStruct(g2,[2,3]):
-			mat.incr(gt,er,("../"+file2))
-		for (seg,gt,er) in g1.compareSegmentsStruct(g2,[2,3]):
-                        segMat.incr(seg,gt,er,("../"+file2))
+		gOUT = Lg(fileOUT)
+		for (gt,er) in gOUT.compareSubStruct(gGT,[2,3]):
+			mat.incr(gt,er,("../"+fileOUT))
+		for (seg,gt,er) in gOUT.compareSegmentsStruct(gGT,[2,3]):
+                        segMat.incr(seg,gt,er,("../"+fileOUT))
 	print "stat from left side expressions:"
 	print stat
 	print "generate HTML in test.html" 
