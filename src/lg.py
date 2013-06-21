@@ -1061,75 +1061,75 @@ class Lg(object):
 					allerrors.append((struc,sg1))
 		return allerrors
 	
-	def compareSegmentsStruct(self, lg2,depths):
+	def compareSegmentsStruct(self, lgGT,depths):
 		"""Compute the number of differing segments, and record disagreements
 		in a list. 
 		The primitives in each subgraph should be of the same number and names
 		(identifiers). Nodes are merged that have identical (label,value)
 		pairs on nodes and all identical incoming and outgoing edges.
-                If used for classification evaluation, the ground-truth should be lg2.
-		The first key value of the matrix is the lg2 obj structure, which
+                If used for classification evaluation, the ground-truth should be lgGT.
+		The first key value of the matrix is the lgGT obj structure, which
 		gives the structure of the corresponding primitives which is the key
 		to get the error structure in self"""
 		(sp1, ps1, _, sre1) = self.segmentGraph()
-		(sp2, ps2, _, sre2) = lg2.segmentGraph()
+		(spGT, psGT, _, sreGT) = lgGT.segmentGraph()
 		#byValue = lambda pair: pair[1]  # define key for sort comparisons.
 
-		allNodes = set(ps2.keys())
+		allNodes = set(psGT.keys())
 		#FIX : this this not the case in spare representation 
-		assert allNodes == set(ps2.keys())
+		assert allNodes == set(psGT.keys())
 	
 		segDiffs = set()
 		correctSegments = set()
-		for primitive in ps2.keys():
+		for primitive in psGT.keys():
 			# Make sure to skip primitives that were missing ('ABSENT'),
 			# as in that case the graphs disagree on all non-identical node
 			# pairs for this primitive, and captured in self.absentEdges.
 			if not 'ABSENT' in self.nlabels[primitive] and \
-					not 'ABSENT' in lg2.nlabels[primitive]:
+					not 'ABSENT' in lgGT.nlabels[primitive]:
 				# Obtain sets of primitives sharing a segment for the current
 				# primitive for both graphs.
-				# Each of sp1/sp2 are a map of ( {prim_set}, label ) pairs.
+				# Each of sp1/spGT are a map of ( {prim_set}, label ) pairs.
 				segPrimSet1 = sp1[ ps1[primitive] ][0]
-				segPrimSet2 = sp2[ ps2[primitive] ][0]
+				segPrimSet2 = spGT[ psGT[primitive] ][0]
 				
 				# Only create an entry where there are disagreements.
 				if segPrimSet1 != segPrimSet2:
-					segDiffs.add( ( ps2[primitive], ps1[primitive]) )
+					segDiffs.add( ( psGT[primitive], ps1[primitive]) )
 				else:
-					correctSegments.add(ps2[primitive])
+					correctSegments.add(psGT[primitive])
 			# DEBUG: don't record differences for a single node.
 			elif len(self.nlabels.keys()) > 1:
 				# If node was missing in this graph or the other, treat 
 				# this graph as having a miss segment
 				# do not count the segment in graph with 1 primitive
-				segDiffs.add(( ps2[primitive], ps1[primitive]) )
+				segDiffs.add(( psGT[primitive], ps1[primitive]) )
 
 		# now check if the labels are identical
 		for seg in correctSegments:
 			# Get label for the first primtives (all primitives have identical
 			# labels in a segment).
 			# DEBUG: use only the set of labels, not confidence values.
-			firstPrim = list(sp2[seg][0])[0]
-			if set(self.nlabels[ firstPrim ].keys()) != set(lg2.nlabels[ firstPrim ].keys()):
-				segDiffs.add(( ps2[primitive], ps1[primitive]) )
+			firstPrim = list(spGT[seg][0])[0]
+			if set(self.nlabels[ firstPrim ].keys()) != set(lgGT.nlabels[ firstPrim ].keys()):
+				segDiffs.add(( psGT[primitive], ps1[primitive]) )
 		allSegWithErr = set([p for (p,_) in segDiffs])
 		# start to build the LG at the object level
 		# add nodes for objet with the labels from the first prim
 		lgObj = Lg()
-		for (sid,lprim) in sp2.iteritems():
-			lgObj.nlabels[sid] = self.nlabels[list(lprim[0])[0]]
+		for (sid,lprim) in spGT.iteritems():
+			lgObj.nlabels[sid] = lgGT.nlabels[list(lprim[0])[0]]
 
 		# Compute the specific 'segment-level' graph edges that disagree, at the
 		# level of primitive-pairs. This means that invalid segmentations may
 		# still have valid layouts in some cases.
 		# Add also the edges in the smallGraph
 		segEdgeErr = set()
-		for thisPair in sre2.keys():
-			# TODO : check if it sp1[thisPair[0]] instead sp1[thisPair[0]][0]
-			thisParentIds = set(sp2[ thisPair[0] ][0])
-			thisChildIds = set(sp2[thisPair[1] ][0])
-			lgObj.elabels[thisPair] = lg2.elabels[ (list(thisParentIds)[0], list(thisChildIds)[0])]
+		for thisPair in sreGT.keys():
+			# TODO : check if it is sp1[thisPair[0]] instead of sp1[thisPair[0]][0]
+			thisParentIds = set(spGT[ thisPair[0] ][0])
+			thisChildIds = set(spGT[thisPair[1] ][0])
+			lgObj.elabels[thisPair] = lgGT.elabels[ (list(thisParentIds)[0], list(thisChildIds)[0])]
 			# A 'correct' edge has the same label between all primitives
 			# in the two segments.
 			# NOTE: we are not checking the consitency of label in each graph
@@ -1140,9 +1140,10 @@ class Lg(object):
 					# DEBUG: compare only label sets, not values.
 					if not (parentId, childId) in self.elabels.keys() or \
 					   not set(self.elabels[ (parentId, childId) ].keys())  == \
-							set(lg2.elabels[ (parentId, childId) ].keys()):
+							set(lgGT.elabels[ (parentId, childId) ].keys()):
 						segEdgeErr.add(thisPair)
 						continue
+                #print lgObj.csv()
 		listOfAllError = []
 		for smg in lgObj.subStructIterator(depths):
 			#if one segment is in the segment error set
@@ -1154,15 +1155,15 @@ class Lg(object):
 					showIt = True
 					continue
 			if showIt:
-				#build the smg for the prim from lg2
+				#build the smg for the prim from lgGT
 				allPrim = []
 				for s in smg.nodes.keys():
-					allPrim.extend(sp2[s][0])
+					allPrim.extend(spGT[s][0])
 				#print allPrim
 				smgPrim1 = self.getSubSmallGraph(allPrim)
-				#build the smg for the prim from lg2 
-				smgPrim2 = lg2.getSubSmallGraph(allPrim)
-				listOfAllError.append((smg,smgPrim2,smgPrim1))
+				#build the smg for the prim from lgGT 
+				smgPrimGT = lgGT.getSubSmallGraph(allPrim)
+				listOfAllError.append((smg,smgPrimGT,smgPrim1))
 
 		return listOfAllError 
 

@@ -202,7 +202,7 @@ def testSubGraphCounting(files):
 		for (seg,gt,er) in gOUT.compareSegmentsStruct(gGT,[2,3]):
                         segMat.incr(seg,gt,er,("../"+fileOUT))
 	print "stat from left side expressions:"
-	print stat
+	#print stat
 	print "generate HTML in test.html" 
 	out=open('Tests/test.html','w')
         out.write('<html xmlns="http://www.w3.org/1999/xhtml">')
@@ -245,14 +245,14 @@ def main():
 
 	compareFiles = [ \
                 #only errors with labels
-			('Tests/infile1','Tests/infile1a'), \
-			('Tests/infile4','Tests/infile4a'), \
-			('Tests/infile4','Tests/infile4b'), \
+			#('Tests/infile1','Tests/infile1a'), \
+			('Tests/infile4','Tests/infile4a')
+			#('Tests/infile4','Tests/infile4b'), \
                         # only errors with seg and layout
-                        ('Tests/segment6','Tests/segment6erra'),\
-                        ('Tests/segment6','Tests/segment6errb'),\
-                        ('Tests/segment5','Tests/segment5erra'),\
-                        ('Tests/segment5','Tests/segment5errb')
+                        #('Tests/segment6','Tests/segment6erra'),\
+                        #('Tests/segment6','Tests/segment6errb'),\
+                        #('Tests/segment5','Tests/segment5erra'),\
+                        #('Tests/segment5','Tests/segment5errb')
 			#('Tests/res_001-equation006.lg','Tests/001-equation006.lg')
 		]
 
@@ -307,7 +307,7 @@ def main():
 	#testLabelComparisons(compareFiles)
 	#testLabelComparisons(compareFilespaper)
 	#testEmpty(compareEmpty)
-	testStructCompare([('Tests/2p2.lg','Tests/2p2a.lg')])
+	#testStructCompare([('Tests/2p2.lg','Tests/2p2a.lg')])
 	testSubGraphCounting(compareFiles) #[('Tests/2p2.lg','Tests/2p2a.lg')])
 	# Extracting trees (layout trees)
 	# testTreeEdges(segFiles)
