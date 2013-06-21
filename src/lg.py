@@ -1090,7 +1090,7 @@ class Lg(object):
 			# labels in a segment).
 			# DEBUG: use only the set of labels, not confidence values.
 			firstPrim = list(spGT[seg][0])[0]
-			if set(self.nlabels[ firstPrim ].keys()) != set(lgGT.nlabels[ firstPrim ].keys()):
+			if (0,[]) != self.cmpNodes(self.nlabels[ firstPrim ].keys(),lgGT.nlabels[ firstPrim ].keys()):
 				segDiffs.add(( psGT[primitive], ps1[primitive]) )
 		allSegWithErr = set([p for (p,_) in segDiffs])
 		# start to build the LG at the object level
@@ -1118,8 +1118,7 @@ class Lg(object):
 				for childId in thisChildIds:
 					# DEBUG: compare only label sets, not values.
 					if not (parentId, childId) in self.elabels.keys() or \
-					   not set(self.elabels[ (parentId, childId) ].keys())  == \
-							set(lgGT.elabels[ (parentId, childId) ].keys()):
+					   (0,[]) != self.cmpEdges(self.elabels[ (parentId, childId) ].keys(),lgGT.elabels[ (parentId, childId) ].keys()):
 						segEdgeErr.add(thisPair)
 						continue
                 #print lgObj.csv()
@@ -1223,5 +1222,24 @@ def defaultMetric(labelList1, labelList2):
         else:
                 ab = diff&set(labelList1)
                 ba = diff&set(labelList2)
+                return (max(len(ab),len(ba) ),[(":".join(ab),":".join(ba))])
+#old way :        return set(labelList1) == set(labelList2)
+
+def defaultMetricXx(labelList1, labelList2):
+#new way but with 1 label per node
+        syn = {'X':'x','\\times':'x', 'P':'p', 'O':'o','C':'c'}
+        def replace(x):
+                if x in syn.keys():
+                        return syn[x]
+                else:
+                        return x
+        a = map(replace, labelList1)
+        b = map(replace, labelList2)
+        diff =  set(a) ^ (set(b)) # symetric diff
+        if len(diff) == 0:
+                return (0,[])
+        else:
+                ab = diff&set(a)
+                ba = diff&set(b)
                 return (max(len(ab),len(ba) ),[(":".join(ab),":".join(ba))])
 #old way :        return set(labelList1) == set(labelList2)
