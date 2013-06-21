@@ -40,32 +40,51 @@ def testshortCuts(compareFiles):
 		else:
 			print str(out1)
 
-def labelComparison(file1,file2):
+def labelComparison(file1,file2, check):
 	print('\n[ Comparing Labels for FILE: ' + file1 + ' and ' + file2 + ' ]')
 	n1 = Lg(file1)
 	n2 = Lg(file2)
 	print('>> ' + file1 + ' vs. ' + file2)
 	out1 = n1.compare(n2)
-	for el in out1[0]:
-		print('  ' + str(el))
-	print('  Node diffs: ' + str(out1[1]))
-	print('  Edge diffs: ' + str(out1[2]))
-	print('  SegEdge diffs: ' + str(out1[3]))
-	print('  Correct Segments: ' + str(out1[4]))
+        met = dict(out1[0])
+        detail = False
+        for k in check.keys():
+                if check[k] != met[k]:
+                        print 'Problem with ' + k
+                        detail = True
+        if detail:
+                for el in out1[0]:
+                        print('  ' + str(el))
+                print('  Node diffs: ' + str(out1[1]))
+                print('  Edge diffs: ' + str(out1[2]))
+                print('  SegEdge diffs: ' + str(out1[3]))
+                print('  Correct Segments: ' + str(out1[4]))
+        else:
+                print 'OK'
 
 	print('>> ' + file2 + ' vs. ' + file1)
 	out2 = n2.compare(n1)
-	for el in out2[0]:
-		print('  ' + str(el))
-	print('  Node diffs: ' + str(out2[1]))
-	print('  Edge diffs: ' + str(out2[2]))
-	print('  SegEdge diffs: ' + str(out2[3]))
-	print('  Correct Segments: ' + str(out1[4]))
+        met = dict(out2[0])
+        detail = False
+        for k in check.keys():
+                if check[k] != met[k]:
+                        print 'Problem with ' + k
+                        detail = True
+        if detail:
+                for el in out2[0]:
+                        print('  ' + str(el))
+                print('  Node diffs: ' + str(out2[1]))
+                print('  Edge diffs: ' + str(out2[2]))
+                print('  SegEdge diffs: ' + str(out2[3]))
+                print('  Correct Segments: ' + str(out2[4]))
+        else:
+                print 'OK'
+
 
 def testLabelComparisons(compareFiles):
 	print('\n--TESTING METRICS AND ERROR LOCALIZATON')
 	for next in compareFiles:
-		labelComparison(next[0],next[1])
+		labelComparison(next[0],next[1], next[2])
 
 def testEmpty(emptyFiles):
 	print('\n--TESTING EMPTY FILES')
@@ -245,9 +264,9 @@ def main():
 
 	compareFiles = [ \
                 #only errors with labels
-			#('Tests/infile1','Tests/infile1a'), \
-			('Tests/infile4','Tests/infile4a')
-			#('Tests/infile4','Tests/infile4b'), \
+			('Tests/infile1','Tests/infile1a', {'D_C':1, 'D_S':0, 'D_L':0}), \
+			('Tests/infile4','Tests/infile4a', {'D_C':1, 'D_S':0, 'D_L':1})
+			#('Tests/infile4','Tests/infile4b', {'D_C':2, 'D_S':0, 'D_L':0})
                         # only errors with seg and layout
                         #('Tests/segment6','Tests/segment6erra'),\
                         #('Tests/segment6','Tests/segment6errb'),\
@@ -255,6 +274,13 @@ def main():
                         #('Tests/segment5','Tests/segment5errb')
 			#('Tests/res_001-equation006.lg','Tests/001-equation006.lg')
 		]
+	compareFilesMulti = [ \
+                #only errors with labels
+			('Tests/multiLab0','Tests/multiLab0a', {'D_C':1, 'D_S':0, 'D_L':0}), \
+			('Tests/multiLab1','Tests/multiLab1a', {'D_C':0, 'D_S':0, 'D_L':2}),\
+			('Tests/multiLab2','Tests/multiLab2a', {'D_C':0, 'D_S':0, 'D_L':4})\
+                                ]
+
 
 	segFiles = [ \
 			'Tests/infile1', \
@@ -304,11 +330,12 @@ def main():
 	# testSegments(segFiles)
 	#testshortCuts(shortCutFiles)
 	# Comparison tests.
-	#testLabelComparisons(compareFiles)
+	testLabelComparisons(compareFiles)
+	testLabelComparisons(compareFilesMulti)
 	#testLabelComparisons(compareFilespaper)
 	#testEmpty(compareEmpty)
 	#testStructCompare([('Tests/2p2.lg','Tests/2p2a.lg')])
-	testSubGraphCounting(compareFiles) #[('Tests/2p2.lg','Tests/2p2a.lg')])
+	#testSubGraphCounting(compareFiles) #[('Tests/2p2.lg','Tests/2p2a.lg')])
 	# Extracting trees (layout trees)
 	# testTreeEdges(segFiles)
 

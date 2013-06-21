@@ -17,7 +17,7 @@ class Lg(object):
 
 	# Define graph data elements ('data members' for an object in the class)
 	__slots__ = ('file','gweight','nlabels','elabels','error','absentNodes',\
-			'absentEdges','hiddenEdges')
+			'absentEdges','hiddenEdges', 'cmpNodes', 'cmpEdges')
 
 	##################################
 	# Constructors (in __init__)
@@ -34,6 +34,8 @@ class Lg(object):
 		self.absentNodes = set([])
 		self.absentEdges = set([])
 		self.hiddenEdges = {}
+                self.cmpNodes = defaultMetric
+                self.cmpEdges = defaultMetric
 
 		fileName = None
 		nodeLabels = {}
@@ -534,8 +536,9 @@ class Lg(object):
 			# labels in a segment).
 			# DEBUG: use only the set of labels, not confidence values.
 			# TODO : why we store the full set 'primSet' as we use only the first id (=sp1)
-			if set(self.nlabels[ list(primSet)[0] ].keys()) == \
-				set(lg2.nlabels[ list(primSet)[0] ].keys()):
+			(cost,errL) = self.cmpNodes(self.nlabels[ list(primSet)[0] ].keys(),lg2.nlabels[ list(primSet)[0] ].keys())
+#if set(self.nlabels[ list(primSet)[0] ].keys()) == 	set(lg2.nlabels[ list(primSet)[0] ].keys()):
+                        if (cost == 0):
 				correctClass += 1
 		metrics = metrics + [ ("ClassError", len(sp2.keys()) - correctClass) ] 
 		metrics = metrics + [ ("nSeg", len(sp2.keys()) - len(lg2.absentNodes)) ] 
@@ -563,8 +566,9 @@ class Lg(object):
 				for childId in thisChildIds:
 					# DEBUG: compare only label sets, not values.
 					if not (parentId, childId) in lg2.elabels.keys() or \
-					   not set(self.elabels[ (parentId, childId) ].keys())  == \
-							set(lg2.elabels[ (parentId, childId) ].keys()):
+                                                    not ((0,[]) == self.cmpEdges(self.elabels[ (parentId, childId) ].keys(),lg2.elabels[ (parentId, childId) ].keys())):
+#					   not set(self.elabels[ (parentId, childId) ].keys())  == \
+#							set(lg2.elabels[ (parentId, childId) ].keys()):
 						error = True
 						segRelErrors += 1
 						segRelEdgeDiffs[ thisPair ] = [ ('Error',1.0) ]
@@ -614,22 +618,15 @@ class Lg(object):
 		# Mismatched nodes.
 		nodeClassError = set()
 		for nid in allNodes: #self.nlabels.keys():
-			if (not nid in self.nlabels) or \
-			(not nid in lg2.nlabels) or \
-			(not set(self.nlabels[nid].keys()) == set(lg2.nlabels[nid].keys())):
-				nlabelMismatch = nlabelMismatch + 1
-				# Merge labels.
-				thisSet = ''.join(sorted(self.nlabels[nid].keys()))
-				thatSet = ''.join(sorted(lg2.nlabels[nid].keys()))
-
-				# NOTE: this ignores label confidences - matching only.
-				nodeconflicts = nodeconflicts + \
-						[ (nid, [ (thisSet, 1.0) ], \
-							[(thatSet, 1.0)] ) ]
-
-				#nodeconflicts = nodeconflicts + \
-				#		[ (nid, sorted(self.nlabels[nid].items(),key=byValue), \
-				#			sorted(lg2.nlabels[nid].items(),key=byValue)) ]
+			(cost,errL) = self.cmpNodes(self.nlabels[nid].keys(),lg2.nlabels[nid].keys())
+                        #if there is some error
+                        if cost > 0:
+                                # add mismatch
+				nlabelMismatch = nlabelMismatch + cost
+                                # add errors in error list
+                                for (l1,l2) in errL:
+                                        nodeconflicts = nodeconflicts + [ (nid, [ (l1, 1.0) ], [(l2, 1.0)] ) ]
+                                # add node in error list
 				nodeClassError = nodeClassError.union([nid])
 
 		# Two-sided comparison of *label sets* (look from absent edges in both
@@ -652,48 +649,30 @@ class Lg(object):
 
 					# DEBUG: Need to indicate correctly *which* graph has the
 					# missing edge; this graph (1st) or the other (listed 2nd).
+                                        conflictList = []
 					if graph == self:
-						thisSet = ''.join(sorted(graph.elabels[npair].keys()))
-						edgeconflicts = edgeconflicts + \
-							[ (npair,[ (thisSet, 1.0) ],\
-									[('_', 1.0)]) ]
-
-						#edgeconflicts = edgeconflicts + \
-						#	[ (npair, sorted(graph.elabels[npair].items(),\
-						#			key=byValue), [('_', 1.0)]) ]
+						for thisLab in self.elabels[npair].keys():
+							conflictList.append((npair, [( thisLab, 1.0) ] , [('_', 1.0)]) )
 					else:
-						thatSet = ''.join(sorted(lg2.elabels[npair].keys()))
-						edgeconflicts = edgeconflicts + \
-							[ (npair, [('_', 1.0)], \
-								[( thatSet, 1.0) ] ) ]
-					
-	
-						#edgeconflicts = edgeconflicts + \
-						#	[ (npair, [('_', 1.0)], \
-						#		sorted(graph.elabels[npair].items(),\
-						#			key=byValue)) ]
+						for thatLab in lg2.elabels[npair].keys():
+							conflictList.append((npair, [('_', 1.0)], [( thatLab, 1.0) ] ) )
 
+                                        edgeconflicts.extend(conflictList)
+					
 		# Obtain number of primitives with an error of any sort.
 		nodeError = nodeClassError.union(nodeEdgeError)
 
-		# One-sided comparison for common edges. Compared by 
-		# label *sets* for edges in each graph.
+		# One-sided comparison for common edges. Compared by cmpEdges
 		for npair in self.elabels.keys():
-			if npair in lg2.elabels.keys() and \
-					not set(self.elabels[npair].keys()) == \
-						set(lg2.elabels[npair].keys()):
-				elabelMismatch = elabelMismatch + 1
-				(a,b) = npair
-
-				thisSet = ''.join(sorted(self.elabels[npair].keys()))
-				thatSet = ''.join(sorted(lg2.elabels[npair].keys()))
-				edgeconflicts = edgeconflicts + \
-					[ (npair, [ (thisSet, 1.0) ], \
-						[ (thatSet, 1.0) ] ) ]
-
-				#edgeconflicts = edgeconflicts + \
-				#	[ (npair, sorted(self.elabels[npair].items(),key=byValue), \
-				#		sorted(lg2.elabels[npair].items(),key=byValue)) ]
+			if npair in lg2.elabels.keys():
+                                (cost,errL) = self.cmpEdges(self.elabels[npair].keys(),lg2.elabels[npair].keys())
+                                if cost > 0:
+                                        elabelMismatch = elabelMismatch + cost
+                                        (a,b) = npair
+                                        # Record nodes in invalid edge
+					nodeEdgeError = nodeEdgeError.union([a,b])
+                                        for (l1,l2) in errL:
+                                                edgeconflicts.append((npair, [ (l1, 1.0) ], [(l2, 1.0)] ) )
 
 		# Now compute segmentation differences.
 		(segMismatch, segDiffs, correctSegs, scMetrics, segRelDiffs) \
@@ -1235,3 +1214,14 @@ def getEdgesBetweenThem(nodes,edges):
 		if (n1 in nodes and n2 in nodes):
 			edg.add((n1,n2))
 	return edg
+
+def defaultMetric(labelList1, labelList2):
+#new way but with 1 label per node
+        diff =  set(labelList1) ^ (set(labelList2)) # symetric diff
+        if len(diff) == 0:
+                return (0,[])
+        else:
+                ab = diff&set(labelList1)
+                ba = diff&set(labelList2)
+                return (max(len(ab),len(ba) ),[(":".join(ab),":".join(ba))])
+#old way :        return set(labelList1) == set(labelList2)
