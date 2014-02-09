@@ -7,11 +7,11 @@ Created on Tue Jun 11 05:56:16 2013
 from operator import itemgetter
 
 class SmDict(object):
-	"""This is a real dictionnary but it is like a dictionnary using only 
+	"""This is not a real dictionnary but it is like a dictionnary using only 
 	the == operator (without hash) 
 	A value can be associate to a smallGraph. 
 	For efficiency, use an object as a value to avoid call to set()
-	It uses the isomorphism to know if 2 smallGraphh are the same."""
+	It uses the isomorphism to know if 2 smallGraphs are the same."""
 	
 	
 	def __init__(self,*args):
@@ -132,7 +132,7 @@ class ConfMatrix(object):
 			outputStream.write('</tr>\n')
 		outputStream.write('</table>\n<p>')
 
-	def toHTML(self, outputStream, limit = 0, viewerURL=""):
+	def toHTML(self, outputStream, limit = 0, viewerURL="", redn = [], rede = []):
                 """ write in the output stream the HTML code for this matrix and
                 return a Counter object with
                 the number of non shown errors and the list of hidden elements
@@ -181,7 +181,7 @@ class ConfMatrix(object):
 		outputStream.write(str(hiddenErr) + viewStr + '</p>')
                 return hiddenErr
 		
-		
+
 class ConfMatrixObject(object):
 	
 	def __init__(self,*args):
@@ -194,7 +194,7 @@ class ConfMatrixObject(object):
 		return str(self.mat)
 
 
-	def toHTML(self, outputStream, limit = 0,viewerURL=""):
+	def toHTML(self, outputStream, limit = 0,viewerURL="", redn = {}):
                 """ write in the output stream the HTML code for this matrix and
                 use the ConfMatrix.toHTML to write the submatrices.
                 The list of files with error is prefixed with the param viewerURL

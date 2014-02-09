@@ -9,6 +9,7 @@ import sys
 import math
 import copy
 import smallGraph
+import compareTools
 
 class Lg(object):
 	"""Class for bipartite graphs where the two node sets are identical, and
@@ -34,8 +35,8 @@ class Lg(object):
 		self.absentNodes = set([])
 		self.absentEdges = set([])
 		self.hiddenEdges = {}
-                self.cmpNodes = defaultMetric
-                self.cmpEdges = defaultMetric
+		self.cmpNodes = compareTools.cmpNodes
+		self.cmpEdges = compareTools.cmpEdges
 
 		fileName = None
 		nodeLabels = {}
@@ -1024,9 +1025,11 @@ class Lg(object):
 		between them. The used label is the merged list of labels from nodes/edges"""
 		sg = smallGraph.SmallGraph()
 		for n in nodelist:
-			sg.nodes[n] = "".join(self.nlabels[n].keys())
+			#sg.nodes[n] = "".join(self.nlabels[n].keys())
+			sg.nodes[n] = self.nlabels[n].keys()
 		for e in getEdgesBetweenThem(nodelist,self.elabels.keys()):
-			sg.edges[e] = "".join(self.elabels[e].keys())
+			#sg.edges[e] = "".join(self.elabels[e].keys())
+			sg.edges[e] = self.elabels[e].keys()
 		return sg
 		
 	#compare the substructure
@@ -1046,13 +1049,12 @@ class Lg(object):
 		The primitives in each subgraph should be of the same number and names
 		(identifiers). Nodes are merged that have identical (label,value)
 		pairs on nodes and all identical incoming and outgoing edges.
-                If used for classification evaluation, the ground-truth should be lgGT.
+		If used for classification evaluation, the ground-truth should be lgGT.
 		The first key value of the matrix is the lgGT obj structure, which
 		gives the structure of the corresponding primitives which is the key
 		to get the error structure in self"""
 		(sp1, ps1, _, sre1) = self.segmentGraph()
 		(spGT, psGT, _, sreGT) = lgGT.segmentGraph()
-		#byValue = lambda pair: pair[1]  # define key for sort comparisons.
 
 		allNodes = set(psGT.keys())
 		#FIX : this this not the case in spare representation 
@@ -1075,6 +1077,7 @@ class Lg(object):
 				# Only create an entry where there are disagreements.
 				if segPrimSet1 != segPrimSet2:
 					segDiffs.add( ( psGT[primitive], ps1[primitive]) )
+					#print "add seg Diff because of set : "  + str(( psGT[primitive], ps1[primitive]))
 				else:
 					correctSegments.add(psGT[primitive])
 			# DEBUG: don't record differences for a single node.
@@ -1083,6 +1086,7 @@ class Lg(object):
 				# this graph as having a miss segment
 				# do not count the segment in graph with 1 primitive
 				segDiffs.add(( psGT[primitive], ps1[primitive]) )
+				#print "add ABSENT : " +  str(( psGT[primitive], ps1[primitive]))
 
 		# now check if the labels are identical
 		for seg in correctSegments:
@@ -1091,7 +1095,8 @@ class Lg(object):
 			# DEBUG: use only the set of labels, not confidence values.
 			firstPrim = list(spGT[seg][0])[0]
 			if (0,[]) != self.cmpNodes(self.nlabels[ firstPrim ].keys(),lgGT.nlabels[ firstPrim ].keys()):
-				segDiffs.add(( psGT[primitive], ps1[primitive]) )
+				segDiffs.add(( psGT[firstPrim], ps1[firstPrim]) )
+				#print "add segDiff because of label : " +  str(( psGT[firstPrim], ps1[firstPrim])) + str((self.nlabels[ firstPrim ].keys(),lgGT.nlabels[ firstPrim ].keys()))
 		allSegWithErr = set([p for (p,_) in segDiffs])
 		# start to build the LG at the object level
 		# add nodes for objet with the labels from the first prim
@@ -1119,17 +1124,20 @@ class Lg(object):
 					# DEBUG: compare only label sets, not values.
 					if not (parentId, childId) in self.elabels.keys() or \
 					   (0,[]) != self.cmpEdges(self.elabels[ (parentId, childId) ].keys(),lgGT.elabels[ (parentId, childId) ].keys()):
+						#print "add edge err : " + str((parentId, childId))
 						segEdgeErr.add(thisPair)
 						continue
-                #print lgObj.csv()
+		#print "LG Obj : \n" + lgObj.csv()
 		listOfAllError = []
 		for smg in lgObj.subStructIterator(depths):
 			#if one segment is in the segment error set
 			showIt = False
 			if len(set(smg.nodes.keys()).intersection(allSegWithErr)) > 0:
+				#print "show because of allSegWithErr : " + str(smg)
 				showIt = True
 			for pair in smg.edges.keys():
 				if pair in segEdgeErr:
+					#print "show because of segEdgeErr : " + str(smg)
 					showIt = True
 					continue
 			if showIt:
@@ -1142,7 +1150,7 @@ class Lg(object):
 				#build the smg for the prim from lgGT 
 				smgPrimGT = lgGT.getSubSmallGraph(allPrim)
 				listOfAllError.append((smg,smgPrimGT,smgPrim1))
-
+		
 		return listOfAllError 
 
 ################################################################
@@ -1213,33 +1221,3 @@ def getEdgesBetweenThem(nodes,edges):
 		if (n1 in nodes and n2 in nodes):
 			edg.add((n1,n2))
 	return edg
-
-def defaultMetric(labelList1, labelList2):
-#new way but with 1 label per node
-        diff =  set(labelList1) ^ (set(labelList2)) # symetric diff
-        if len(diff) == 0:
-                return (0,[])
-        else:
-                ab = diff&set(labelList1)
-                ba = diff&set(labelList2)
-                return (max(len(ab),len(ba) ),[(":".join(ab),":".join(ba))])
-#old way :        return set(labelList1) == set(labelList2)
-
-def defaultMetricXx(labelList1, labelList2):
-#new way but with 1 label per node
-        syn = {'X':'x','\\times':'x', 'P':'p', 'O':'o','C':'c'}
-        def replace(x):
-                if x in syn.keys():
-                        return syn[x]
-                else:
-                        return x
-        a = map(replace, labelList1)
-        b = map(replace, labelList2)
-        diff =  set(a) ^ (set(b)) # symetric diff
-        if len(diff) == 0:
-                return (0,[])
-        else:
-                ab = diff&set(a)
-                ba = diff&set(b)
-                return (max(len(ab),len(ba) ),[(":".join(ab),":".join(ba))])
-#old way :        return set(labelList1) == set(labelList2)

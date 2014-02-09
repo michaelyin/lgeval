@@ -211,7 +211,7 @@ def testSubGraphCounting(files):
 	stat = SmGrConfMatrix.SmDict()
 	mat = SmGrConfMatrix.ConfMatrix()
         segMat = SmGrConfMatrix.ConfMatrixObject()
-	for ( fileGT, fileOUT ) in files:		
+	for ( fileGT, fileOUT,_ ) in files:		
 		gGT = Lg(fileGT)
 		for s in gGT.subStructIterator([1,2,3,4]):
 			stat.get(s,SmGrConfMatrix.Counter).incr()
@@ -330,12 +330,12 @@ def main():
 	# testSegments(segFiles)
 	#testshortCuts(shortCutFiles)
 	# Comparison tests.
-	testLabelComparisons(compareFiles)
-	testLabelComparisons(compareFilesMulti)
+	#testLabelComparisons(compareFiles)
+	#testLabelComparisons(compareFilesMulti)
 	#testLabelComparisons(compareFilespaper)
 	#testEmpty(compareEmpty)
-	#testStructCompare([('Tests/2p2.lg','Tests/2p2a.lg')])
-	#testSubGraphCounting(compareFiles) #[('Tests/2p2.lg','Tests/2p2a.lg')])
+	testStructCompare([('Tests/2p2.lg','Tests/2p2a.lg')])
+	testSubGraphCounting(compareFiles) #[('Tests/2p2.lg','Tests/2p2a.lg')])
 	# Extracting trees (layout trees)
 	# testTreeEdges(segFiles)
 

@@ -17,7 +17,11 @@ from lg import *
 from lgio import *
 import SmGrConfMatrix
 
-INKMLVIEWER = "inkml_viewer/index.xhtml?path=../testdata/&files="
+# for RIT web service :
+#INKMLVIEWER = "inkml_viewer/index.xhtml?path=../testdata/&files="
+#local :
+INKMLVIEWER = "http://www.cs.rit.edu/~rlaz/inkml_viewer/index.xhtml?path=http://www.cs.rit.edu/~rlaz/testdata/&files="
+MINERRTOSHOW = 3
 
 def runBatch(fileName, defaultFileOrder, confMat, confMatObj):
 	"""Compile metrics for pairs of files provided in a CSV
@@ -44,9 +48,9 @@ def runBatch(fileName, defaultFileOrder, confMat, confMatObj):
 				lgfile2 = lgfile1
 				lgfile1 = temp
 			print ("Test: "+lgfile1+" vs. "+lgfile2);
-                        toShow = lgfile1
-                        if len(row)> 2:
-                                toShow = row[2].strip()
+			toShow = lgfile1
+			if len(row)> 2:
+				toShow = row[2].strip()
 			# Here lg1 is the output, and lg2 the ground truth.
 			lg1 = Lg(lgfile1)
 			lg2 = Lg(lgfile2)
@@ -57,11 +61,23 @@ def runBatch(fileName, defaultFileOrder, confMat, confMatObj):
 			diffStream.write('DIFF,' + lgfile1 + ',' + lgfile2 + '\n')
 			writeDiff(out[1], out[3], out[2], diffStream)
 			
+			nodeClassErr = set()
+			edgeErr = set()
+			if confMat or confMatObj:
+				for (n,_,_) in out[1] :
+					nodeClassErr.add(n)
+				for (e,_,_) in out[2] :
+					edgeErr.add(e)
+			
 			if confMat:
 				for (gt,er) in lg1.compareSubStruct(lg2,[2,3]):
+					er.rednodes = set(er.nodes.keys()) & nodeClassErr
+					er.rededges = set(er.edges.keys()) & edgeErr
 					matrix.incr(gt,er,toShow)
-                        if confMatObj:
-				for (obj,gt,er) in lg1.compareSegmentsStruct(lg2,[2,3]):
+			if confMatObj:
+				for (obj,gt,er) in lg1.compareSegmentsStruct(lg2,[2]):
+					er.rednodes = set(er.nodes.keys()) & nodeClassErr
+					er.rededges = set(er.edges.keys()) & edgeErr
 					matrixObj.incr(obj,gt,er,toShow)
                         
         htmlStream = None
@@ -69,13 +85,13 @@ def runBatch(fileName, defaultFileOrder, confMat, confMatObj):
 		htmlStream = open(fileName + '.html','w')
 		htmlStream.write('<html xmlns="http://www.w3.org/1999/xhtml">')
 		htmlStream.write('<h1> File :'+fileName+'</h1>')
-                htmlStream.write('<p>Only errors with at least 3 occurrences appear</p>')
+                htmlStream.write('<p>Only errors with at least '+str(MINERRTOSHOW)+' occurrences appear</p>')
 	if confMat:
 		htmlStream.write('<h2> Substructure Confusion Matrix </h2>')
-		matrix.toHTML(htmlStream,3,INKMLVIEWER)
+		matrix.toHTML(htmlStream,MINERRTOSHOW,INKMLVIEWER)
 	if confMatObj:
 		htmlStream.write('<h2> Substructure Confusion Matrix at Object level </h2>')
-		matrixObj.toHTML(htmlStream,3,INKMLVIEWER)
+		matrixObj.toHTML(htmlStream,MINERRTOSHOW,INKMLVIEWER)
 	if confMat or confMatObj:
 		htmlStream.write('</html>')
                 htmlStream.close()

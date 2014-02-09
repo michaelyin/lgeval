@@ -8,6 +8,7 @@ Created on Mon Jun 10 04:13:40 2013
 import itertools
 import cmath
 from math import sqrt
+import compareTools
 
 class SmallGraph(object):
 	"""Class for small graphs. The individual nodes
@@ -16,7 +17,7 @@ class SmallGraph(object):
 	see igraph or graph_tool module for bigger graph"""
 
 	# Define graph data elements ('data members' for an object in the class)
-	__slots__ = ('nodes','edges')
+	__slots__ = ('nodes','edges', 'rednodes', 'rededges')
 
 	##################################
 	# Constructors (in __init__)
@@ -28,6 +29,8 @@ class SmallGraph(object):
 		"""
 		self.nodes = {}
 		self.edges = {}
+		self.rednodes = set()
+		self.rededges = set()
 		if(len(args) == 2 and isinstance(args[0],list) and isinstance(args[1],list)):
 			for (i,l) in args[0]:
 				self.nodes[i] = l
@@ -36,9 +39,9 @@ class SmallGraph(object):
 	
 	def printLG(self):
 		for k in self.nodes.keys():
-			print ("N,"+str(k)+","+str(self.nodes[k]) + ",1.0")
+			print ("N,"+str(k)+","+(",".join(self.nodes[k])) + ",1.0")
 		for (e1,e2) in self.edges.keys():
-			print ("E,"+str(e1)+","+str(e2)+","+str(self.edges[(e1,e2)]) + ",1.0")
+			print ("E,"+str(e1)+","+str(e2)+","+(",".join(self.edges[(e1,e2)])) + ",1.0")
 	
 	def __str__(self):
 		"""returns a string with nodes and edges. Format:
@@ -69,9 +72,13 @@ class SmallGraph(object):
 				return False
 		myLabels = self.nodes.values() + self.edges.values()
 		hisLabels = osg.nodes.values() + osg.edges.values()
-		myLabels.sort()
-		hisLabels.sort()
-		if(myLabels != hisLabels):
+		#myLabels.sort()
+		#hisLabels.sort()
+		#if(myLabels != hisLabels):
+		#print myLabels
+		myLabelsFlat = [item for sublist in myLabels for item in sublist]
+		hisLabelsFlat = [item for sublist in hisLabels for item in sublist]
+		if compareTools.cmpNodes(myLabelsFlat, hisLabelsFlat) != (0,[]):
 			return False
 		#So they seems to be isomorphims (same label counts)
 		#let's try all permutation of nodes
@@ -93,7 +100,9 @@ class SmallGraph(object):
 		#print "Map : " + str(hisNode)
 		#first check the node labels
 		for (my,his) in hisNode.iteritems():
-			if(self.nodes[my] != osg.nodes[his]):
+			#if(self.nodes[my] != osg.nodes[his]):
+			if(compareTools.cmpNodes(self.nodes[my] ,osg.nodes[his]) != (0,[])):
+				#print str((self.nodes[my] ,osg.nodes[his])) + ' are diff'
 				return False
 		#then check the edges
 		for (a,b) in self.edges.iterkeys():
@@ -104,7 +113,8 @@ class SmallGraph(object):
 			if not (oa,ob) in osg.edges.keys():
 				#print str((oa,ob)) + " not in osg"
 				return False
-			if self.edges[(a,b)] != osg.edges[(oa,ob)]:
+			#if self.edges[(a,b)] != osg.edges[(oa,ob)]:
+			if compareTools.cmpEdges(self.edges[(a,b)], osg.edges[(oa,ob)])!= (0,[]):
 				#print self.edges[(a,b)] + " != " + osg.edges[(oa,ob)]	
 				return False
 		return True
@@ -132,8 +142,11 @@ class SmallGraph(object):
 		i = 0
 		findXY = {}
 		for k in self.nodes.keys():
-			svg = svg + '<circle cx="'+str(xy[i][0]) + '" cy="'+str(xy[i][1]) + '"r="'+str(r)+'" fill="none" stroke="blue"/>\n'
-			lab = str(self.nodes[k])
+			color = 'blue'
+			if(k in self.rednodes):
+				color = 'red'
+			svg = svg + '<circle cx="'+str(xy[i][0]) + '" cy="'+str(xy[i][1]) + '"r="'+str(r)+'" fill="none" stroke="'+color+'"/>\n'
+			lab = ",".join(self.nodes[k])
 			svg = svg + '<text 	x="'+str(xy[i][0]-0.75*r) + '" y="'+str(xy[i][1]+r/2) + '"	font-family="Arial"'+'font-size="'+str(1.5*r / sqrt(max([len(lab),1])))+'"'+'>' 
 			svg = svg + lab + '</text>\n'
 			findXY[k] = i
@@ -145,8 +158,11 @@ class SmallGraph(object):
 		for (a,b) in self.edges.keys():
 			ai = findXY[a]			
 			bi = findXY[b]
-			svg = svg + '<line x1="'+str(xy[ai][0]) + '" y1="'+str(xy[ai][1]) + '" x2="'+str(xy[bi][0]) + '" y2="'+str(xy[bi][1]) + '" stroke="black" marker-end="url(#Triangle)" />\n'
-			lab = str(self.edges[(a,b)])
+			color = 'black'
+			if((a,b) in self.rededges):
+				color = 'red'
+			svg = svg + '<line x1="'+str(xy[ai][0]) + '" y1="'+str(xy[ai][1]) + '" x2="'+str(xy[bi][0]) + '" y2="'+str(xy[bi][1]) + '" stroke="'+color+'" marker-end="url(#Triangle)" />\n'
+			lab = ",".join(self.edges[(a,b)])
 			svg = svg + '<text 	x="'+str((xy[ai][0] + xy[bi][0])/2) + '" y="'+str((xy[ai][1]+ xy[bi][1])/2) + '"	font-family="Arial"'+'font-size="'+str(r / sqrt(max([len(lab),1])))+'"'+'>' 
 			svg = svg + lab + '</text>\n'
 		return svg + '</svg>\n'
