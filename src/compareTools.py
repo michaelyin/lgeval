@@ -1,5 +1,12 @@
-#define how compare nodes and edges, usable by other packages like smallGraph
-
+################################################################
+# compareTools.py
+#
+# Defines how nodes and edges are compared.
+# Usable by other packages such as smallGraph
+#
+# Author: H. Mouchere, Oct. 2013
+# Copyright (c) 2013, Harold Mouchere
+################################################################
 
 def defaultMetric(labelList1, labelList2):
 #new way but with 1 label per node

@@ -8,7 +8,7 @@
 #   and subscripts by 'SUP' and 'SUB.'
 #
 # Author: R. Zanibbi, June 2012-Jan. 2013
-# Copyright (c) 2012, Richard Zanibbi and Harold Mouchere
+# Copyright (c) 2012 Richard Zanibbi and Harold Mouchere
 ################################################################
 
 import sys

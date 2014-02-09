@@ -1,9 +1,12 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jun 11 05:56:16 2013
+#################################################################
+# SmGrConfMatrix.py
+#
+# Structure confusion histograms. 
+#
+# Author: H. Mouchere, June 2013
+# Copyright (c) 2013 Richard Zanibbi and Harold Mouchere
+################################################################
 
-@author: Harold
-"""
 from operator import itemgetter
 
 class SmDict(object):
@@ -12,7 +15,6 @@ class SmDict(object):
 	A value can be associate to a smallGraph. 
 	For efficiency, use an object as a value to avoid call to set()
 	It uses the isomorphism to know if 2 smallGraphs are the same."""
-	
 	
 	def __init__(self,*args):
 		self.myitems = []

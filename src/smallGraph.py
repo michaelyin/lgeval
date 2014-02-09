@@ -1,3 +1,14 @@
+################################################################
+# smallGraph.py
+#
+# Simpler graph class for use with structure confusion 
+# histograms.
+#
+# Author: Harold Mouchere
+# Copyright (c) 2013 Richard Zanibbi and Harold Mouchere
+################################################################
+
+
 # -*- coding: utf-8 -*-
 """
 Created on Mon Jun 10 04:13:40 2013

@@ -1,5 +1,5 @@
 ################################################################
-# lg.py - Bipartitite Graph Class
+# lg.py - Label Graph Class
 #
 # Author: R. Zanibbi, June 2012
 # Copyright (c) 2012, Richard Zanibbi and Harold Mouchere

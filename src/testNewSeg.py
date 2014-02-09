@@ -1,7 +1,7 @@
 ################################################################
 # testNewSeg.py
 #
-# Test program for new segmentation for bipartite graph class.
+# Test program for new segmentation for label graphs.
 #
 # Authors: R. Zanibbi, H. Mouchere
 #	June-August 2012
@@ -9,8 +9,6 @@
 ################################################################
 from bg import *
 from bestBG import *
-
-
 
 
 def main():
