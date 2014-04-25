@@ -1,4 +1,7 @@
-# For latex symbols, both versions with an initial backslash (\) and without
+##ifdef DEBUG
+#
+##endif
+#For latex symbols, both versions with an initial backslash (\) and without
 # are included in the symbol mapping table below.
 #
 # SYNONYMNS for SYMBOL NAMES:
@@ -261,7 +264,6 @@ lim,->,<mi xml:id=_I_>\lim</mi>
 # RZ: Addition (March 13)
 Sigma,->,<mo xml:id=_I_>\sum</mo>
 Integral,->,<mo xml:id=_I_>\int</mo>
-
 integral,->,<mo xml:id=_I_>\int</mo>
 
 # ?? Treating prime (e.g. ' in a') as superscript relative to base.
@@ -273,10 +275,42 @@ prime,->,<mo xml:id=_I_>\prime</mo>
 \sqrt,->,<msqrt xml:id=_I_></msqrt>
 sqrt,->,<msqrt xml:id=_I_></msqrt>
 
+# Grids
+<mtable>,->,<mtable>
+<mtr>,->,<mtr>
+<mtd>,->,<mtd>
+
 # Treat symbol by default as an identifier (_L_ holds symbol label).
 OBJ_DEFAULT,->,<mi xml:id=_I_>_L_</mi>
 
+################################################################
+# STRUCTURES
+# 
+# Mappings are defined by (symbol, REL1, REL2, ..., RELN) tuples.
+#    At right of the arrow, subtrees belonging to identified
+#    relationships may be arranged in the output.
+#
+# Special Symbol Identifiers:
+#  ANY: any symbol.
+#  PARENT: parent symbol in a directed relationship.
+#  CHILD: child symbol in a directed relationship.
+#################################################################
+
 STRUCTURE
+
+# CROHME 2014: adding relationships for tables/grids (for matrices, etc.)
+# WARNING: these will be translated in the order visited in the file - this
+#   is important if one wishes to keep the order of rows and cells 
+#   consistent with the original file.
+<mtable>,GRID,->,<mtable>,GRID,</mtable>
+
+# Map 1st -> n-1st elements (e.g. rows, cells) first.
+<mtr>,GRID,NEXT,->,<mtr>,GRID,</mtr>,NEXT
+<mtd>,GRID,NEXT,->,<mtd>,GRID,</mtd>,NEXT
+# Then map the last row separately (no "NEXT" relationship)
+<mtr>,GRID,->,<mtr>,GRID,</mtr>
+<mtd>,GRID,->,<mtd>,GRID,</mtd>
+
 # Need to define unique set of labels for the competition.
 sqrt,I,->,<msqrt xml:id=_I_>,I,</msqrt>
 sqrt,C,->,<msqrt xml:id=_I_>,C,</msqrt>
@@ -290,12 +324,12 @@ sqrt,CONTAINS,->,<msqrt xml:id=_I_>,CONTAINS,</msqrt>
 sqrt,I,A,->,<mroot xml:id=_I_>,I,A,</mroot>
 sqrt,C,A,->,<mroot xml:id=_I_>,C,A,</mroot>
 sqrt,CONTAINS,A,->,<mroot xml:id=_I_>,CONTAINS,A,</mroot>
-sqrt,CONTAINS,ABOVE,->,<mroot xml:id=_I_>,CONTAINS,A,</mroot>
+sqrt,CONTAINS,ABOVE,->,<mroot xml:id=_I_>,CONTAINS,ABOVE,</mroot>
 
 \sqrt,I,A,->,<mroot xml:id=_I_>,I,A,</mroot>
 \sqrt,C,A,->,<mroot xml:id=_I_>,C,A,</mroot>
 \sqrt,CONTAINS,A,->,<mroot xml:id=_I_>,CONTAINS,A,</mroot>
-\sqrt,CONTAINS,ABOVE,->,<mroot xml:id=_I_>,CONTAINS,A,</mroot>
+\sqrt,CONTAINS,ABOVE,->,<mroot xml:id=_I_>,CONTAINS,ABOVE,</mroot>
 
 -,A,B,->,<mfrac xml:id=_I_>,A,B,</mfrac>
 -,ABOVE,BELOW,->,<mfrac xml:id=_I_>,ABOVE,BELOW,</mfrac>
@@ -303,9 +337,16 @@ horizontal-line,ABOVE,BELOW,->,<mfrac xml:id=_I_>,ABOVE,BELOW,</mfrac>
 
 ANY,A,B,->,<munderover>,PARENT,B,A,</munderover>
 ANY,ABOVE,BELOW,->,<munderover>,PARENT,BELOW,ABOVE,</munderover>
+ANY,ULIMIT,LLIMIT,->,<munderover>,PARENT,LLIMIT,ULIMIT,</munderover>
 ANY,Sub,Sup,->,<msubsup>,PARENT,Sub,Sup,</msubsup>
 ANY,SUB,SUP,->,<msubsup>,PARENT,SUB,SUP,</msubsup>
 ANY,SUBSC,SUPER,->,<msubsup>,PARENT,SUBSC,SUPER,</msubsup>
+
+
+
+# Individual relationships (arbitrary PARENT/CHILD relationships).
+#GRID,->,PARENT,CHILD
+
 
 R,->,<mrow>,PARENT,CHILD,</mrow>
 r,->,<mrow>,PARENT,CHILD,</mrow>
@@ -324,12 +365,15 @@ SUPER,->,<msup>,PARENT,CHILD,</msup>
 A,->,<munder>,CHILD,PARENT,</munder>
 ABOVE,->,<munder>,CHILD,PARENT,</munder>
 a,->,<munder>,CHILD,PARENT,</munder>
+ULIMIT,->,<munder>,CHILD,PARENT,</munder>
 
 B,->,<munder>,PARENT,CHILD,</munder>
 BELOW,->,<munder>,PARENT,CHILD,</munder>
 b,->,<munder>,PARENT,CHILD,</munder>
+LLIMIT,->,<munder>,PARENT,CHILD,</munder>
 
-REL_DEFAULT,->,<mrow>,PARENT,CHILD,</mrow>
+REL_DEFAULT,->,PARENT,CHILD
+%REL_DEFAULT,->,<mrow>,PARENT,CHILD,</mrow>
 
 # Accents
 # ?? Overline handlined by 'below' mapping above for simplicity
