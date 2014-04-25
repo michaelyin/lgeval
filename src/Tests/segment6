@@ -9,12 +9,12 @@ N,node5,I,1.0
 N,node2,a,1.0
 N,node3,a,1.0
 
-E,node1,node4,*,1.0
-E,node1,node5,*,1.0
-E,node4,node1,*,1.0
-E,node4,node5,*,1.0
-E,node5,node1,*,1.0
-E,node5,node4,*,1.0
+E,node1,node4,I,1.0
+E,node1,node5,I,1.0
+E,node4,node1,I,1.0
+E,node4,node5,I,1.0
+E,node5,node1,I,1.0
+E,node5,node4,I,1.0
 
 E,node1,node2,SUP,1.0
 E,node1,node3,SUB,1.0

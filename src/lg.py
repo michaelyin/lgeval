@@ -1,5 +1,5 @@
 ################################################################
-# lg.py - Label Graph Class
+# lg.py - Bipartitite Graph Class
 #
 # Author: R. Zanibbi, June 2012
 # Copyright (c) 2012, Richard Zanibbi and Harold Mouchere
@@ -222,7 +222,7 @@ class Lg(object):
 								#nid2 = n2.strip()
 								if nid1 != nid2:
 									primPair = ( nid1, nid2 )
-									elabel = '*' #segmentation
+									elabel = nlabel#'*' #segmentation
 									if primPair in self.elabels.keys():
 										elabelDict = self.elabels[ primPair ]
 										if elabel in elabelDict:
@@ -287,7 +287,7 @@ class Lg(object):
 					# Ignore lines with comments.
 					pass
 				else:
-					sys.stderr.write('  !! Invalid graph entry type (expect N/E/O/OE): ' \
+					sys.stderr.write('  !! Invalid graph entry type (expect N/E/O/EO): ' \
 							+ str(row) + '\n')
 					self.error = True
 	
@@ -376,61 +376,95 @@ class Lg(object):
 
 		# Note: a segmentation edge in either direction merges a primitive pair.
 		primSets = {}
-		for node in self.nlabels.keys():
-			primSets[node] = set([node])
+		for node,labs in self.nlabels.items():
+			primSets[node] = {}
+			for l in labs:
+				primSets[node][l] = set([node])
 		for (n1, n2) in self.elabels.keys():
-			if '*' in self.elabels[(n1,n2)].keys():
-				# TODO : sets are mutable object, so primSets[n1].add([2]) it will avoid multiple copy
-				primSets[n1] = primSets[n1].union( set([ n2 ]))
-				primSets[n2] = primSets[n2].union( set([ n1 ]))
-
-		# NOTE: Segments are currently assigned the label of the first
-		# primitive added to the segmentPrimitiveMap. THIS ASSUMES THAT
-		# ALL PRIMITIVES IN A SEGMENT ARE IDENTICALLY LABELED.
+			commonLabels = set(self.nlabels[n1].keys()).intersection(self.nlabels[n2].keys(),self.elabels[(n1,n2)].keys())
+			for l in commonLabels:
+				primSets[n1][l].add(n2)
+				primSets[n2][l].add(n1)
+		# NOTE: Segments can have multiple label
+		# warning: a primitive can belong to several different
+		# segments with different sets of primitives and different label.
+		# but there is only one segment with the same label attached to each primitive
+		# (not possible to represent several segmentation hypothesis of the same symbol)
 		i = 0
 		segmentList = []
 		rootSegments = set([])
-		for primitive in primSets.keys():
-			alreadySegmented = False
-			for j in range(len(segmentList)):
-				if primitive in segmentList[j]:
-					primitiveSegmentMap[ primitive ] = 'seg' + str(j)
-					alreadySegmented = True
-					break
+		#for each label associated with each prim, there is a potential seg
+		for primitive,segments in primSets.items():
+			for lab in segments.keys():
+				alreadySegmented = False
+				for j in range(len(segmentList)):
+					if segments[lab] == segmentList[j]["prim"]:
+						if not primitive in primitiveSegmentMap:
+							primitiveSegmentMap[ primitive ] = {}
+						primitiveSegmentMap[ primitive ][lab] = 'seg' + str(j)
+						alreadySegmented = True
+						if lab not in segmentList[j]["label"]:
+							segmentPrimitiveMap[  'seg' + str(j) ][1].append(lab)
+							segmentList[j]["label"].add(lab)
+						break
 
-			if not alreadySegmented:
-				# Add the new segment.
-				newSegment = 'seg' + str(i)
-				segmentList = segmentList + [ primSets[primitive] ]
-				segmentPrimitiveMap[ newSegment ] = ( primSets[primitive], \
-						self.nlabels[primitive] )
-				primitiveSegmentMap[ primitive ] = newSegment
-				rootSegments = rootSegments.union( set([ newSegment ]))
-				i += 1
+				if not alreadySegmented:
+					# Add the new segment.
+					newSegment = 'seg' + str(i)
+					segmentList = segmentList + [ {"label":{lab},"prim":primSets[primitive][lab]} ]
+					segmentPrimitiveMap[ newSegment ] = (segments[lab],[lab])
+					if not primitive in primitiveSegmentMap:
+							primitiveSegmentMap[ primitive ] = {}
+					primitiveSegmentMap[ primitive ][lab] = newSegment
+					rootSegments.add(newSegment)
+					i += 1
 
 		# Identify 'root' objects/segments (i.e. with no incoming edges),
 		# and edges between objects. **We skip segmentation edges.
-		#segEdges = {}
-		for (n1, n2) in self.elabels.keys():
+		
+		for (n1, n2),elabs in self.elabels.items():
 			segment1 = primitiveSegmentMap[n1]
-			segment2 = primitiveSegmentMap[n2] 
-			if segment2 in rootSegments:
-				rootSegments.remove(segment2)
-
-			for label in self.elabels[(n1,n2)].keys():
-				if label != '*' and (segment1, segment2) in segmentEdges.keys():
-					if label in segmentEdges[ (segment1, segment2) ].keys():
-						# Sum weights for repeated labels
-						segmentEdges[ (segment1, segment2)][label] += \
-								self.elabels[(n1,n2)][label]
-					else:
-						# Add unaltered weights for new edge labels
-						segmentEdges[ (segment1, segment2) ][label] = \
-								self.elabels[(n1,n2)][label]
-				elif label != '*':
-					segmentEdges[ (segment1, segment2) ] = {}
-					segmentEdges[ (segment1, segment2) ][label] = \
-							self.elabels[(n1,n2)][label]
+			segment2 = primitiveSegmentMap[n2]
+			#for all possible pair of segments with these two primitives, look for the effective relation labels
+			possibleRelationLabels = set(elabs.keys()).difference(self.nlabels[n1].keys(),self.nlabels[n2].keys())
+			if len(possibleRelationLabels) != 0:
+				#for all pair of labels
+				for l1,pset1 in segment1.items():
+					for l2, pset2 in segment2.items():
+						#if not in the same seg
+						if pset1 != pset2:
+							#look for the label which is common for all primitive pair in the two segments
+							theRelationLab = possibleRelationLabels
+							for p1 in primSets[n1][l1]:
+								for p2 in primSets[n2][l2]:
+									if(p1,p2) in self.elabels:
+										theRelationLab &= self.elabels[(p1,p2)].keys()
+									else:
+										theRelationLab = set([]) # it should be a clique !
+									if len(theRelationLab) == 0:
+										break
+								if len(theRelationLab) == 0:
+									break
+							# there is a common relation if theRelationLab is not empty
+							if len(theRelationLab) != 0:
+								#we can remove seg2 from the roots
+								if pset2 in rootSegments:
+									rootSegments.remove(pset2)
+								#print (str((n1, n2))+ " => " + str(( pset1,  pset2)) + "  = " + str(theRelationLab))
+								for label in theRelationLab:
+									if ( pset1,  pset2) in segmentEdges:
+										if label in segmentEdges[ ( pset1,  pset2) ]:
+											# Sum weights for repeated labels
+											segmentEdges[ ( pset1,  pset2)][label] += \
+													self.elabels[(n1,n2)][label]
+										else:
+											# Add unaltered weights for new edge labels
+											segmentEdges[ ( pset1,  pset2) ][label] = \
+													self.elabels[(n1,n2)][label]
+									else:
+										segmentEdges[ ( pset1, pset2) ] = {}
+										segmentEdges[ ( pset1, pset2) ][label] = \
+												self.elabels[(n1,n2)][label]
 
 		self.restoreUnlabeledEdges()
 
@@ -456,43 +490,84 @@ class Lg(object):
 	
 		edgeDiffCount = 0
 		segDiffs = {}
-		correctSegments = []
-		correctSegmentIds = set([])
+		correctSegments = set([])
+		correctSegmentsAndClass = set([])
+		# list and count the edges errors which are due to segmentation errors
+		# use cmpNodes to compare the labels of symbols
+		# idea : build the sub graph with the current primitive as center and only 
 		for primitive in ps1.keys():
 			# Make sure to skip primitives that were missing ('ABSENT'),
 			# as in that case the graphs disagree on all non-identical node
 			# pairs for this primitive, and captured in self.absentEdges.
-			if not 'ABSENT' in self.nlabels[primitive] and \
-					not 'ABSENT' in lg2.nlabels[primitive]:
-				# Obtain sets of primitives sharing a segment for the current
-				# primitive for both graphs.
-				segPrimSet1 = set([])
-				segPrimSet2 = set([])
+			# if not 'ABSENT' in self.nlabels[primitive] and \
+					# not 'ABSENT' in lg2.nlabels[primitive]:
+				#the 2 sub graphs
+				edgeFromP1 = {}
+				edgeFromP2 = {}
+				for (lab1,seg1) in ps1[primitive].items():
+					for p in sp1[seg1][0]:
+						if p != primitive:
+							if p in edgeFromP1:
+								edgeFromP1[p].append(lab1)
+							else:
+								edgeFromP1[p] = [lab1]
+	
+				for (lab2,seg2) in ps2[primitive].items():
+					for p in sp2[seg2][0]:
+						if p != primitive:
+							if p in edgeFromP2:
+								edgeFromP2[p].append(lab2)
+							else:
+								edgeFromP2[p] = [lab2]
 
-				# Each of sp1/sp2 are a map of ( {prim_set}, label ) pairs.
-				segPrimSet1 = sp1[ ps1[primitive] ][0]
-				segPrimSet2 = sp2[ ps2[primitive] ][0]
-
-				# Compute differences in node at opposite end.
-				diff1 = segPrimSet1.difference(segPrimSet2)
-				diff2 = segPrimSet2.difference(segPrimSet1)
-				unionDiffs = diff1.union(diff2)
-				differingEdges = len(unionDiffs)
-				edgeDiffCount = edgeDiffCount + differingEdges
+				# Compute differences in edges labels with cmpNodes (as they are symbol labels)
+				diff1 = set([])
+				diff2 = set([])
+				# first add differences for shared primitives
+				commonPrim = set(edgeFromP1.keys()).intersection(edgeFromP2.keys())
+				for p in commonPrim:
+					(cost,diff) = self.cmpNodes(edgeFromP1[p], edgeFromP2[p])
+					edgeDiffCount = edgeDiffCount + cost
+					if cost > 0: #by someway, they disagree, thus add in both sets
+						
+						diff1.add(p)
+						diff2.add(p)
+				#then add differences for primitives which are not is the other set
+				for p in (set(edgeFromP1.keys()) - commonPrim):
+					(cost,diff) = self.cmpNodes(edgeFromP1[p], [])
+					edgeDiffCount = edgeDiffCount + cost
+					diff1.add(p)
+					
+				for p in (set(edgeFromP2.keys()) - commonPrim):
+					(cost,diff) = self.cmpNodes(edgeFromP2[p], [])
+					edgeDiffCount = edgeDiffCount + cost
+					diff2.add(p)
+					
 
 				# Only create an entry where there are disagreements.
-				if differingEdges > 0:
+				if len(diff1)+len(diff2) > 0:
 					segDiffs[primitive] = ( diff1, diff2 )
-				else:
-					# Keep track of correct segments.
-					if not ps1[primitive] in correctSegmentIds:
-						correctSegmentIds.add(ps1[primitive])
-						correctSegments = correctSegments + \
-							[ (ps1[primitive], segPrimSet1) ]
+				
+				# look for correct segments, ie primitive sets which are the same in both graphs
+				#NOTE: even if this algorithm is not symmetric, the result is symmetric
+				# print ("ps1="+str(ps1))
+				# print ("ps2="+str(ps2))
+				for (lab1,seg1) in ps1[primitive].items():
+					#print ("pour "+ str((lab1,seg1)))
+					if(seg1, lab1) not in correctSegmentsAndClass: # already found, no need to search
+						for (lab2,seg2) in ps2[primitive].items():
+							# print ("  > pour "+ str((lab2,seg2)))
+							# print ("  >   " + str(sp1[seg1][0]) + "vs"+str(sp2[seg2][0]))
+							if sp1[seg1][0] == sp2[seg2][0]:
+								# print ("OK"+str((seg1, lab1)))
+								correctSegments.add(seg1)
+								(cost,_) = self.cmpNodes([lab1],[lab2]) # do not use spX[segX][1] because we can want to count each correct label as 1 even if there is an error in some labels in the same set
+								if (cost == 0):
+									correctSegmentsAndClass.add((seg1, lab1))
 
 			# DEBUG: don't record differences for a single node.
-			elif 'ABSENT' in self.nlabels[primitive] \
-					and len(self.nlabels.keys()) > 1:
+			# elif 'ABSENT' in self.nlabels[primitive] \
+					# and len(self.nlabels.keys()) > 1:
 				# If node was missing in this graph, treat this graph as having
 				# the opposite segmentation relationship of that in the other 
 				# graph - in other words, total error, with all pairs incorrect.
@@ -506,13 +581,13 @@ class Lg(object):
 				# segDiffs[primitive] = ( ediff, ographSegPrimSet )
 				
 				#version CROHME
-				ographSegPrimSet = set((sp2[ ps2[primitive] ])[0]).difference(set([primitive]))
-				ediff = set([primitive])
-				edgeDiffCount = edgeDiffCount + len(ographSegPrimSet)
-				segDiffs[primitive] = ( ediff, ographSegPrimSet )
+				# ographSegPrimSet = set((sp2[ ps2[primitive] ])[0]).difference(set([primitive]))
+				# ediff = set([primitive])
+				# edgeDiffCount = edgeDiffCount + len(ographSegPrimSet)
+				# segDiffs[primitive] = ( ediff, ographSegPrimSet )
 
 			# DEBUG: don't record differences for a single node.
-			elif len(self.nlabels.keys()) > 1:
+			# elif len(self.nlabels.keys()) > 1:
 				# Similar, for case where node is missing in lg2.
 				# allOtherNodes = allNodes.difference(set([primitive]))
 				# graphSegPrimSet = set((sp1[ ps1[primitive] ])[0]).difference(set([primitive]))
@@ -521,27 +596,18 @@ class Lg(object):
 				# edgeDiffCount = edgeDiffCount + len(ediff) + \
 						# len(graphSegPrimSet)
 
-				#version CROHME
-				graphSegPrimSet = set((sp1[ ps1[primitive] ])[0]).difference(set([primitive]))
-				ediff = set([primitive])
-				segDiffs[primitive] = ( graphSegPrimSet, ediff )
-				edgeDiffCount = edgeDiffCount + len(graphSegPrimSet)
+				# version CROHME
+				# graphSegPrimSet = set((sp1[ ps1[primitive] ])[0]).difference(set([primitive]))
+				# ediff = set([primitive])
+				# segDiffs[primitive] = ( graphSegPrimSet, ediff )
+				# edgeDiffCount = edgeDiffCount + len(graphSegPrimSet)
 
 		# Compute metrics 
 		metrics = [ ("SegError", len(sp2.keys()) - len(correctSegments) ) ]
-		correctClass = 0
-		# TODO :  the first part 'label' of the couple (label, primSet) is not use in the loop
-		# furthermore it is not a label but segId
-		for (label, primSet) in correctSegments:
-			# Get label for the first primtives (all primitives have identical
-			# labels in a segment).
-			# DEBUG: use only the set of labels, not confidence values.
-			# TODO : why we store the full set 'primSet' as we use only the first id (=sp1)
-			(cost,errL) = self.cmpNodes(self.nlabels[ list(primSet)[0] ].keys(),lg2.nlabels[ list(primSet)[0] ].keys())
-#if set(self.nlabels[ list(primSet)[0] ].keys()) == 	set(lg2.nlabels[ list(primSet)[0] ].keys()):
-                        if (cost == 0):
-				correctClass += 1
-		metrics = metrics + [ ("ClassError", len(sp2.keys()) - correctClass) ] 
+		nbSegmClass = 0
+		for (_,labs) in sp2.items():
+			nbSegmClass += len(labs[1])
+		metrics = metrics + [ ("ClassError", nbSegmClass - len(correctSegmentsAndClass)) ] 
 		metrics = metrics + [ ("nSeg", len(sp2.keys()) - len(lg2.absentNodes)) ] 
 		metrics = metrics + [ ("detectedSeg", len(sp1.keys())) ]
 
@@ -567,7 +633,7 @@ class Lg(object):
 				for childId in thisChildIds:
 					# DEBUG: compare only label sets, not values.
 					if not (parentId, childId) in lg2.elabels.keys() or \
-                                                    not ((0,[]) == self.cmpEdges(self.elabels[ (parentId, childId) ].keys(),lg2.elabels[ (parentId, childId) ].keys())):
+						    not ((0,[]) == self.cmpEdges(self.elabels[ (parentId, childId) ].keys(),lg2.elabels[ (parentId, childId) ].keys())):
 #					   not set(self.elabels[ (parentId, childId) ].keys())  == \
 #							set(lg2.elabels[ (parentId, childId) ].keys()):
 						error = True
@@ -620,14 +686,14 @@ class Lg(object):
 		nodeClassError = set()
 		for nid in allNodes: #self.nlabels.keys():
 			(cost,errL) = self.cmpNodes(self.nlabels[nid].keys(),lg2.nlabels[nid].keys())
-                        #if there is some error
-                        if cost > 0:
-                                # add mismatch
+			#if there is some error
+			if cost > 0:
+				# add mismatch
 				nlabelMismatch = nlabelMismatch + cost
-                                # add errors in error list
-                                for (l1,l2) in errL:
-                                        nodeconflicts = nodeconflicts + [ (nid, [ (l1, 1.0) ], [(l2, 1.0)] ) ]
-                                # add node in error list
+				# add errors in error list
+				for (l1,l2) in errL:
+					nodeconflicts = nodeconflicts + [ (nid, [ (l1, 1.0) ], [(l2, 1.0)] ) ]
+				# add node in error list
 				nodeClassError = nodeClassError.union([nid])
 
 		# Two-sided comparison of *label sets* (look from absent edges in both
@@ -639,26 +705,26 @@ class Lg(object):
 		nodeEdgeError = set()
 		for (graph,oGraph) in [ (self,lg2), (lg2,self) ]:
 			for npair in graph.elabels.keys():
-				if not npair in oGraph.elabels.keys() \
-						and (not len(graph.elabels[ npair ]) == 1 \
-						or not '_' in graph.elabels[ npair ]):
-					elabelMismatch = elabelMismatch + 1
+				if not npair in oGraph.elabels \
+						and (not graph.elabels[ npair ] == ['_']):
+					(cost,errL) = self.cmpEdges(graph.elabels[ npair ].keys(),['_'])
+					elabelMismatch = elabelMismatch + cost
 
 					(a,b) = npair
 					# Record nodes in invalid edge
-					nodeEdgeError = nodeEdgeError.union([a,b])
+					nodeEdgeError.update([a,b])
 
 					# DEBUG: Need to indicate correctly *which* graph has the
 					# missing edge; this graph (1st) or the other (listed 2nd).
-                                        conflictList = []
+					conflictList = []
 					if graph == self:
-						for thisLab in self.elabels[npair].keys():
-							conflictList.append((npair, [( thisLab, 1.0) ] , [('_', 1.0)]) )
+						for (l1,l2) in errL:
+							edgeconflicts.append((npair, [ (l1, 1.0) ], [(l2, 1.0)] ) )
 					else:
-						for thatLab in lg2.elabels[npair].keys():
-							conflictList.append((npair, [('_', 1.0)], [( thatLab, 1.0) ] ) )
+						for (l1,l2) in errL:
+							edgeconflicts.append((npair, [ (l2, 1.0) ], [(l1, 1.0)] ) )
 
-                                        edgeconflicts.extend(conflictList)
+					edgeconflicts.extend(conflictList)
 					
 		# Obtain number of primitives with an error of any sort.
 		nodeError = nodeClassError.union(nodeEdgeError)
@@ -666,14 +732,14 @@ class Lg(object):
 		# One-sided comparison for common edges. Compared by cmpEdges
 		for npair in self.elabels.keys():
 			if npair in lg2.elabels.keys():
-                                (cost,errL) = self.cmpEdges(self.elabels[npair].keys(),lg2.elabels[npair].keys())
-                                if cost > 0:
-                                        elabelMismatch = elabelMismatch + cost
-                                        (a,b) = npair
-                                        # Record nodes in invalid edge
-					nodeEdgeError = nodeEdgeError.union([a,b])
-                                        for (l1,l2) in errL:
-                                                edgeconflicts.append((npair, [ (l1, 1.0) ], [(l2, 1.0)] ) )
+				(cost,errL) = self.cmpEdges(self.elabels[npair].keys(),lg2.elabels[npair].keys())
+				if cost > 0:
+					elabelMismatch = elabelMismatch + cost
+					(a,b) = npair
+					# Record nodes in invalid edge
+					nodeEdgeError.update([a,b])
+					for (l1,l2) in errL:
+						edgeconflicts.append((npair, [ (l1, 1.0) ], [(l2, 1.0)] ) )
 
 		# Now compute segmentation differences.
 		(segMismatch, segDiffs, correctSegs, scMetrics, segRelDiffs) \
@@ -688,14 +754,14 @@ class Lg(object):
 		incorrectPairs = len(badPairs)
 
 		# Compute number of mis-segmented node pairs.
-		badSegPairs = {}
+		badSegPairs = set([])
 		for node in segDiffs.keys():
 			for other in segDiffs[node][0]:
-				if not (other, node) in badSegPairs:
-					badSegPairs[(node, other)] = True
+				if node != other and (other, node) not in badSegPairs:
+					badSegPairs.add((node, other))
 			for other in segDiffs[node][1]:
-				if not (other, node) in badSegPairs:
-					badSegPairs[(node, other)] = True
+				if  node != other and (other, node)not in badSegPairs:
+					badSegPairs.add((node, other))
 		segPairErrors = len(badSegPairs)
 
 		# Compute performance metrics; avoid divisions by 0.
@@ -1035,7 +1101,7 @@ class Lg(object):
 	#compare the substructure
 	def compareSubStruct(self, olg, depths):
 		"""return the list of couple of substructure which disagree
-                the substructure from self are used as references"""
+		the substructure from self are used as references"""
 		allerrors = []
 		for struc in olg.subStructIterator(depths):
 				sg1 = self.getSubSmallGraph(struc.nodes.keys())

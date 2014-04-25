@@ -38,47 +38,34 @@ def testshortCuts(compareFiles):
 		if out1[0][8][1] == 0:
 			print ("OK")
 		else:
-			print str(out1)
+			print (str(out1))
 
-def labelComparison(file1,file2, check):
-	print('\n[ Comparing Labels for FILE: ' + file1 + ' and ' + file2 + ' ]')
-	n1 = Lg(file1)
-	n2 = Lg(file2)
-	print('>> ' + file1 + ' vs. ' + file2)
-	out1 = n1.compare(n2)
-        met = dict(out1[0])
-        detail = False
-        for k in check.keys():
-                if check[k] != met[k]:
-                        print 'Problem with ' + k
-                        detail = True
-        if detail:
-                for el in out1[0]:
-                        print('  ' + str(el))
-                print('  Node diffs: ' + str(out1[1]))
-                print('  Edge diffs: ' + str(out1[2]))
-                print('  SegEdge diffs: ' + str(out1[3]))
-                print('  Correct Segments: ' + str(out1[4]))
-        else:
-                print 'OK'
-
-	print('>> ' + file2 + ' vs. ' + file1)
-	out2 = n2.compare(n1)
-        met = dict(out2[0])
-        detail = False
-        for k in check.keys():
-                if check[k] != met[k]:
-                        print 'Problem with ' + k
-                        detail = True
-        if detail:
-                for el in out2[0]:
-                        print('  ' + str(el))
-                print('  Node diffs: ' + str(out2[1]))
-                print('  Edge diffs: ' + str(out2[2]))
-                print('  SegEdge diffs: ' + str(out2[3]))
-                print('  Correct Segments: ' + str(out2[4]))
-        else:
-                print 'OK'
+def labelComparison(f1,f2, check):
+	print('\n[ Comparing Labels for FILE: ' + f1 + ' and ' + f2 + ' ]')
+	for (file1,file2) in [(f1,f2),(f2,f1)]:
+		n1 = Lg(file1)
+		n2 = Lg(file2)
+		print('>> ' + file1 + ' vs. ' + file2)
+		out1 = n1.compare(n2)
+		met = dict(out1[0])
+		detail = False
+		for k in check.keys():
+			if k == "corrSeg":
+				if check[k] != len(out1[4]):
+					print ('Problem with ' + k)
+					detail = True
+			elif check[k] != met[k]:
+				print ('Problem with ' + k)
+				detail = True
+		if detail:
+			for el in out1[0]:
+				print('  ' + str(el))
+			print('  Node diffs: ' + str(out1[1]))
+			print('  Edge diffs: ' + str(out1[2]))
+			print('  SegEdge diffs: ' + str(out1[3]))
+			print('  Correct Segments: ' + str(out1[4]))
+		else:
+			print ('OK'+str(check))
 
 
 def testLabelComparisons(compareFiles):
@@ -101,14 +88,17 @@ def testEmpty(emptyFiles):
 def testSegments(segFiles):
 	print('\n--TESTING SEGMENTATION')
 	for file in segFiles:
-		print('\n[ Segmentation for FILE: ' + file + ' ]')
-		n = Lg(file)
+		print('\n[ Segmentation for FILE: ' + file[0] + ' ]')
+		n = Lg(file[0])
 		(segmentPrimitiveMap, primitiveSegmentMap, noparentSegments, segmentEdges) = \
 				n.segmentGraph()
-		print('  SEGMENTS -> PRIMITIVES:\n\t' + str(segmentPrimitiveMap))
-		print('  PRIMITIVES -> SEGMENTS:\n\t' + str(primitiveSegmentMap))
-		print('  NON-PARENT SEGMENTS: ' + str(noparentSegments))
-		print('  SEGMENT EDGES:\n\t' + str(segmentEdges))
+		if(len(segmentPrimitiveMap) == file[1]["nbSeg"]) and (len(segmentEdges) == file[1]["nbSegEd"]):
+			print("OK :"+str(file[1]))
+		else:
+			print('  SEGMENTS -> PRIMITIVES:\n\t' + str(segmentPrimitiveMap))
+			print('  PRIMITIVES -> SEGMENTS:\n\t' + str(primitiveSegmentMap))
+			print('  NON-PARENT SEGMENTS: ' + str(noparentSegments))
+			print('  SEGMENT EDGES:\n\t' + str(segmentEdges))
 
 def testTreeEdges(treeFiles):
 	print('\n--TESTING TREE EDGE/LAYOUT TREE EXTRACTION')
@@ -194,14 +184,14 @@ def testInvertValues(files):
 
 def testStructCompare(files):
 	print('\n--TESTING STRUCT COMPARE')
-	print " sub iterator (sizes 1 and 3): "
+	print (" sub iterator (sizes 1 and 3): ")
 	g1 = Lg(files[0][0])
 	for s in g1.subStructIterator([1,3]):
 		print(s)
-	print " sub iterator (sizes 2): "
+	print (" sub iterator (sizes 2): ")
 	for s in g1.subStructIterator(2):
 		print(s)
-	print " sub comparision :"
+	print (" sub comparision :")
 	for ( file1, file2 ) in files:		
 		g1 = Lg(file1) # ground-truth
 		g2 = Lg(file2) # output
@@ -210,7 +200,7 @@ def testStructCompare(files):
 def testSubGraphCounting(files):
 	stat = SmGrConfMatrix.SmDict()
 	mat = SmGrConfMatrix.ConfMatrix()
-        segMat = SmGrConfMatrix.ConfMatrixObject()
+	segMat = SmGrConfMatrix.ConfMatrixObject()
 	for ( fileGT, fileOUT,_ ) in files:		
 		gGT = Lg(fileGT)
 		for s in gGT.subStructIterator([1,2,3,4]):
@@ -219,16 +209,16 @@ def testSubGraphCounting(files):
 		for (gt,er) in gOUT.compareSubStruct(gGT,[2,3]):
 			mat.incr(gt,er,("../"+fileOUT))
 		for (seg,gt,er) in gOUT.compareSegmentsStruct(gGT,[2,3]):
-                        segMat.incr(seg,gt,er,("../"+fileOUT))
-	print "stat from left side expressions:"
+			segMat.incr(seg,gt,er,("../"+fileOUT))
+	print ("stat from left side expressions:")
 	#print stat
-	print "generate HTML in test.html" 
+	print ("generate HTML in test.html" )
 	out=open('Tests/test.html','w')
-        out.write('<html xmlns="http://www.w3.org/1999/xhtml">')
+	out.write('<html xmlns="http://www.w3.org/1999/xhtml">')
 	out.write('<h1> Substructure Stat </h1>')
 	out.write(stat.toHTML())
-	print "Confusion matrix when compared with right side ME"
-	print mat
+	print ("Confusion matrix when compared with right side ME")
+	print (mat)
 	out.write('<h1> Substructure Confusion </h1>')
 	mat.toHTML(out)
 	out.write('<h1> Substructure Confusion with at least 1 error </h1>')
@@ -263,35 +253,39 @@ def main():
 		]
 
 	compareFiles = [ \
-                #only errors with labels
+		#only errors with labels
 			('Tests/infile1','Tests/infile1a', {'D_C':1, 'D_S':0, 'D_L':0}), \
 			('Tests/infile4','Tests/infile4a', {'D_C':1, 'D_S':0, 'D_L':1})
 			#('Tests/infile4','Tests/infile4b', {'D_C':2, 'D_S':0, 'D_L':0})
-                        # only errors with seg and layout
-                        #('Tests/segment6','Tests/segment6erra'),\
-                        #('Tests/segment6','Tests/segment6errb'),\
-                        #('Tests/segment5','Tests/segment5erra'),\
-                        #('Tests/segment5','Tests/segment5errb')
+			# only errors with seg and layout
+			#('Tests/segment6','Tests/segment6erra'),\
+			#('Tests/segment6','Tests/segment6errb'),\
+			#('Tests/segment5','Tests/segment5erra'),\
+			#('Tests/segment5','Tests/segment5errb')
 			#('Tests/res_001-equation006.lg','Tests/001-equation006.lg')
 		]
 	compareFilesMulti = [ \
-                #only errors with labels
-			('Tests/multiLab0','Tests/multiLab0a', {'D_C':1, 'D_S':0, 'D_L':0}), \
-			('Tests/multiLab1','Tests/multiLab1a', {'D_C':0, 'D_S':0, 'D_L':2}),\
-			('Tests/multiLab2','Tests/multiLab2a', {'D_C':0, 'D_S':0, 'D_L':4})\
-                                ]
+		#only errors with labels
+			('Tests/multiLab0','Tests/multiLab0a', {'D_C':1, 'D_S':0, 'D_L':0,'corrSeg':1}), \
+			('Tests/multiLab1','Tests/multiLab1a', {'D_C':0, 'D_S':2, 'D_L':2,'corrSeg':2}),\
+			('Tests/multiLab2','Tests/multiLab2a', {'D_C':0, 'D_S':4, 'D_L':4,'corrSeg':2}),\
+			('Tests/multiLab2','Tests/multiLab2b', {'D_C':2, 'D_S':6, 'D_L':7,'corrSeg':1})\
+				]
 
 
 	segFiles = [ \
-			'Tests/infile1', \
-			'Tests/infile4', \
-			'Tests/infile5', \
-			'Tests/segment1', \
-			'Tests/segment2', \
-			'Tests/segment3', \
-			'Tests/segment4', \
-			'Tests/segment5', \
-			'Tests/segment6'
+			('Tests/infile1',{'nbSeg':1, 'nbSegEd':0}), \
+			('Tests/infile4',{'nbSeg':4, 'nbSegEd':6}), \
+			('Tests/infile5',{'nbSeg':4, 'nbSegEd':6}), \
+			('Tests/segment1',{'nbSeg':2, 'nbSegEd':1}), \
+			('Tests/segment2',{'nbSeg':3, 'nbSegEd':3}), \
+			('Tests/segment3',{'nbSeg':2, 'nbSegEd':0}), \
+			('Tests/segment4',{'nbSeg':2, 'nbSegEd':0}), \
+			('Tests/segment5',{'nbSeg':3, 'nbSegEd':2}), \
+			('Tests/segment6',{'nbSeg':3, 'nbSegEd':2}), \
+			('Tests/multiLab0',{'nbSeg':1, 'nbSegEd':0}), \
+			('Tests/multiLab1',{'nbSeg':2, 'nbSegEd':1}), \
+			('Tests/multiLab2',{'nbSeg':3, 'nbSegEd':1})
 		]
 
 	compareFilespaper = [ \
@@ -327,15 +321,15 @@ def main():
 	#testInvalidFiles(invalidfiles)
 
 	# Segmentation tests.
-	# testSegments(segFiles)
+	testSegments(segFiles)
 	#testshortCuts(shortCutFiles)
-	# Comparison tests.
+	#Comparison tests.
 	#testLabelComparisons(compareFiles)
-	#testLabelComparisons(compareFilesMulti)
+	testLabelComparisons(compareFilesMulti)
 	#testLabelComparisons(compareFilespaper)
 	#testEmpty(compareEmpty)
-	testStructCompare([('Tests/2p2.lg','Tests/2p2a.lg')])
-	testSubGraphCounting(compareFiles) #[('Tests/2p2.lg','Tests/2p2a.lg')])
+	#testStructCompare([('Tests/2p2.lg','Tests/2p2a.lg')])
+	#testSubGraphCounting(compareFiles) #[('Tests/2p2.lg','Tests/2p2a.lg')])
 	# Extracting trees (layout trees)
 	# testTreeEdges(segFiles)
 
