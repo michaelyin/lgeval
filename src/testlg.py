@@ -241,7 +241,9 @@ def main():
 
 	shortCutFiles = [ \
 			('Tests/segment3','Tests/segment3sc'), \
+			('Tests/segment3old','Tests/segment3sc'), \
 			('Tests/segment1','Tests/segment1sc'), \
+			('Tests/segment1old','Tests/segment1sc'), \
 			('Tests/segment2','Tests/segment2sc')
 		]
 
@@ -269,7 +271,9 @@ def main():
 			('Tests/multiLab0','Tests/multiLab0a', {'D_C':1, 'D_S':0, 'D_L':0,'corrSeg':1}), \
 			('Tests/multiLab1','Tests/multiLab1a', {'D_C':0, 'D_S':2, 'D_L':2,'corrSeg':2}),\
 			('Tests/multiLab2','Tests/multiLab2a', {'D_C':0, 'D_S':4, 'D_L':4,'corrSeg':2}),\
-			('Tests/multiLab2','Tests/multiLab2b', {'D_C':2, 'D_S':6, 'D_L':7,'corrSeg':1})\
+			('Tests/multiLab2','Tests/multiLab2b', {'D_C':2, 'D_S':6, 'D_L':7,'corrSeg':1}),\
+			('Tests/102_em_39_VO.lg','Tests/102_em_39_GT.lg', {'D_C':3, 'D_S':14, 'D_L':18,'corrSeg':4}),\
+			('Tests/6_em_5_UPV.lg','Tests/6_em_5_GT.lg', {'D_C':0, 'D_S':0, 'D_L':0,'corrSeg':11})\
 				]
 
 
@@ -317,12 +321,12 @@ def main():
 			'Tests/infile5b'
 		]
 	# Input file tests.	
-	# testInput(validfiles)
+	testInput(validfiles)
 	#testInvalidFiles(invalidfiles)
 
 	# Segmentation tests.
-	testSegments(segFiles)
-	#testshortCuts(shortCutFiles)
+	#testSegments(segFiles)
+	testshortCuts(shortCutFiles)
 	#Comparison tests.
 	#testLabelComparisons(compareFiles)
 	testLabelComparisons(compareFilesMulti)

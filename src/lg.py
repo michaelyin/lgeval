@@ -145,6 +145,7 @@ class Lg(object):
 						self.error = True
 					else:
 						primPair = ( row[1].strip(), row[2].strip() )
+						#self to self edge = error
 						if primPair[0] == primPair[1]:
 							sys.stderr.write('  !! Invalid self-edge (' +
 									self.file + '):\n\t' + str(row) + '\n')
@@ -161,7 +162,7 @@ class Lg(object):
 							# Add (or replace) entry for the label.
 							nlabelDict[ nlabel ] = float(row[4])
 
-
+						#an edge already existing, add a new label
 						elif primPair in self.elabels.keys():
 							elabelDict = self.elabels[ primPair ]
 							elabel = row[3].strip()
@@ -170,7 +171,16 @@ class Lg(object):
 								sys.stderr.write(' !! Repeated edge label entry (' \
 										+ self.file + '):\n\t' + str(row) + '\n')
 								self.error = True
-							# Add (or replace) entry for the label.
+							if elabel == '*':# if it uses the old fashion segmentation label, convert it by finding the (only) node label
+								if primPair[0] in self.nlabels and primPair[1] in self.nlabels and \
+								self.nlabels[ primPair[0]] == self.nlabels[ primPair[1]]:
+									elabel =  list(self.nlabels[ primPair[0]].keys())[0]
+								else:
+									sys.stderr.write(' !! * used but ambigius label in nodes (' \
+										+ self.file + '):\n\t' + str(row) + '\n')
+									self.error = True
+			
+			# Add (or replace) entry for the label.
 							# Feb. 2013 - allow no weight.
 							if len(row) > MIN_EDGE_ENTRY_LENGTH:
 								elabelDict[ elabel ] = float(row[4])
@@ -181,7 +191,14 @@ class Lg(object):
 							# as a dictionary.
 							primPair = ( row[1].strip(), row[2].strip() )
 							elabel = row[3].strip()
-							
+							if elabel == '*':# if it uses the old fashion segmentation label, convert it by finding the (only) node label
+								if primPair[0] in self.nlabels and primPair[1] in self.nlabels and \
+								self.nlabels[ primPair[0]] == self.nlabels[ primPair[1]]:
+									elabel = list(self.nlabels[ primPair[0]].keys())[0]
+								else:
+									sys.stderr.write(' !! * used but ambigius label in nodes (' \
+										+ self.file + '):\n\t' + str(row) + '\n')
+									self.error = True
 							self.elabels[ primPair ] = { elabel : float(row[4]) }
 				elif entryType == 'O':
 					if len(row) < MIN_OBJECT_ENTRY_LENGTH:
@@ -529,7 +546,6 @@ class Lg(object):
 					(cost,diff) = self.cmpNodes(edgeFromP1[p], edgeFromP2[p])
 					edgeDiffCount = edgeDiffCount + cost
 					if cost > 0: #by someway, they disagree, thus add in both sets
-						
 						diff1.add(p)
 						diff2.add(p)
 				#then add differences for primitives which are not is the other set
@@ -603,6 +619,7 @@ class Lg(object):
 				# edgeDiffCount = edgeDiffCount + len(graphSegPrimSet)
 
 		# Compute metrics 
+		#print (str(sp2))
 		metrics = [ ("SegError", len(sp2.keys()) - len(correctSegments) ) ]
 		nbSegmClass = 0
 		for (_,labs) in sp2.items():
@@ -621,7 +638,7 @@ class Lg(object):
 		segRelErrors = 0
 		segRelEdgeDiffs = {}
 		#segRelMatched = set([])
-
+		
 		for thisPair in sre1.keys():
 			thisParentIds = set(sp1[ thisPair[0] ][0])
 			thisChildIds = set(sp1[thisPair[1] ][0])
