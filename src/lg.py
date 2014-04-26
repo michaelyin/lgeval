@@ -455,7 +455,7 @@ class Lg(object):
 							for p1 in primSets[n1][l1]:
 								for p2 in primSets[n2][l2]:
 									if(p1,p2) in self.elabels:
-										theRelationLab &= self.elabels[(p1,p2)].keys()
+										theRelationLab &= set(self.elabels[(p1,p2)].keys())
 									else:
 										theRelationLab = set([]) # it should be a clique !
 									if len(theRelationLab) == 0:

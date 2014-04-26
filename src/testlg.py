@@ -36,7 +36,7 @@ def testshortCuts(compareFiles):
 		print('>> ' + next[0] + ' vs. ' + next[1])
 		out1 = n1.compare(n2)
 		if out1[0][8][1] == 0:
-			print ("OK")
+			print ("\tOK ")
 		else:
 			print (str(out1))
 
@@ -65,7 +65,7 @@ def labelComparison(f1,f2, check):
 			print('  SegEdge diffs: ' + str(out1[3]))
 			print('  Correct Segments: ' + str(out1[4]))
 		else:
-			print ('OK'+str(check))
+			print ('\tOK '+str(check))
 
 
 def testLabelComparisons(compareFiles):
@@ -93,7 +93,7 @@ def testSegments(segFiles):
 		(segmentPrimitiveMap, primitiveSegmentMap, noparentSegments, segmentEdges) = \
 				n.segmentGraph()
 		if(len(segmentPrimitiveMap) == file[1]["nbSeg"]) and (len(segmentEdges) == file[1]["nbSegEd"]):
-			print("OK :"+str(file[1]))
+			print("\tOK :"+str(file[1]))
 		else:
 			print('  SEGMENTS -> PRIMITIVES:\n\t' + str(segmentPrimitiveMap))
 			print('  PRIMITIVES -> SEGMENTS:\n\t' + str(primitiveSegmentMap))
