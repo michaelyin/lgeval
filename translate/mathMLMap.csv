@@ -1,7 +1,8 @@
-##ifdef DEBUG
+# mathMLMap.csv
+#  - file to translate .lg files to Presentation MathML format 
+#    repr. of expression structure.
 #
-##endif
-#For latex symbols, both versions with an initial backslash (\) and without
+# For latex symbols, both versions with an initial backslash (\) and without
 # are included in the symbol mapping table below.
 #
 # SYNONYMNS for SYMBOL NAMES:
@@ -289,6 +290,11 @@ OBJ_DEFAULT,->,<mi xml:id=_I_>_L_</mi>
 # Mappings are defined by (symbol, REL1, REL2, ..., RELN) tuples.
 #    At right of the arrow, subtrees belonging to identified
 #    relationships may be arranged in the output.
+#
+# NOTE: relationships on the left side of an arrow are matched
+#       alphabetically, independent of their order as children.
+#       This assumes that child relationships are labeled
+#       uniquely!!
 #
 # Special Symbol Identifiers:
 #  ANY: any symbol.
