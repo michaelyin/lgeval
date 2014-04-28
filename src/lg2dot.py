@@ -150,7 +150,9 @@ def dagSegmentString(lg, lg2, segPrimMap, primSegMap, correctSegs):
 	for segmentId in sorted(list(segPrimMap.keys())):
 		color = 'red,penwidth=2.0,peripheries=2,fontcolor=red'
 		BadSegmentation = True
-
+		print(correctSegs)
+		print("HERE");
+		
 		# Search for this segment in the list of correct segments.
 		for (sid, primSet) in correctSegs:
 			if segmentId == sid:

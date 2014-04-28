@@ -257,16 +257,16 @@ def main():
 		
 		# Compute segmentation and classification errors.
 		numSegments = int(allSum["nSeg"])
-		correctSegments = int(numSegments - allSum["SegError"])
-		classErrors = int(allSum["ClassError"])
-		correctClass = numSegments - int(allSum["ClassError"])
-		numSegRelEdges = int(allSum["nSegRelEdges"])
 		detectedSegs = int(allSum["detectedSeg"])
+		correctSegments = int(allSum["CorrectSegments"]) #int(detectedSegs - allSum["SegError"])
+		classErrors = int(allSum["ClassError"])
+		correctClass = int(allSum["CorrectSegmentsAndClass"]) #detectedSegs - int(allSum["ClassError"])
+		numSegRelEdges = int(allSum["nSegRelEdges"])
 		detectedSegRelEdges = int(allSum["dSegRelEdges"])
-		correctSegRelEdges = 0
+		segRelErrors = int(allSum["SegRelErrors"])
+		
 		if detectedSegRelEdges > 0:
-			#correctSegRelEdges = numSegRelEdges - int(allSum["SegRelError"])
-			correctSegRelEdges = detectedSegRelEdges - int(allSum["SegRelError"])
+			correctSegRelEdges = detectedSegRelEdges - segRelErrors
 		segRelRecall = 100.0
 		if numSegRelEdges > 0:
 			segRelRecall = 100*float(correctSegRelEdges)/numSegRelEdges
@@ -275,7 +275,7 @@ def main():
 			segRelPrecision = float(100*float(correctSegRelEdges)/detectedSegRelEdges)
 		relFalsePositive = 0
 		if detectedSegRelEdges > 0:
-			relFalsePositive = detectedSegRelEdges - correctSegRelEdges
+			relFalsePositive = segRelErrors
 
 	
 		print("")

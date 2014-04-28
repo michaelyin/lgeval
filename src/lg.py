@@ -620,7 +620,10 @@ class Lg(object):
 
 		# Compute metrics 
 		#print (str(sp2))
+
 		metrics = [ ("SegError", len(sp2.keys()) - len(correctSegments) ) ]
+		metrics = metrics + [ ("CorrectSegments", len(correctSegments) ) ]
+		metrics = metrics + [ ("CorrectSegmentsAndClass", len(correctSegmentsAndClass)) ]
 		nbSegmClass = 0
 		for (_,labs) in sp2.items():
 			nbSegmClass += len(labs[1])
@@ -635,8 +638,9 @@ class Lg(object):
 		# Compute the specific 'segment-level' graph edges that disagree, at the
 		# level of primitive-pairs. This means that invalid segmentations may
 		# still have valid layouts in some cases.
+		primRelErrors = 0
 		segRelErrors = 0
-		segRelEdgeDiffs = {}
+		primRelEdgeDiffs = {}
 		#segRelMatched = set([])
 		
 		for thisPair in sre1.keys():
@@ -654,13 +658,18 @@ class Lg(object):
 #					   not set(self.elabels[ (parentId, childId) ].keys())  == \
 #							set(lg2.elabels[ (parentId, childId) ].keys()):
 						error = True
-						segRelErrors += 1
-						segRelEdgeDiffs[ thisPair ] = [ ('Error',1.0) ]
+						primRelErrors += 1
+						primRelEdgeDiffs[ thisPair ] = [ ('Error',1.0) ]
 						continue
-			self.error |= error
-		metrics = metrics + [ ("SegRelError", segRelErrors) ]
 
-		return (edgeDiffCount, segDiffs, correctSegments, metrics, segRelEdgeDiffs)
+			# RZ DEBUG: count primitive edge errors separately from segment (i.e whole objects/symbols)
+			if error:
+				segRelErrors += 1
+			self.error |= error
+		metrics = metrics + [ ("SegRelErrors", segRelErrors) ]
+		metrics = metrics + [ ("PrimitiveRelErrors", primRelErrors) ]
+
+		return (edgeDiffCount, segDiffs, correctSegments, metrics, primRelEdgeDiffs)
 
 	def compare(self, lg2):
 		"""Returns: 1. a list of (metric,value) pairs,
