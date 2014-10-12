@@ -12,8 +12,8 @@
 
 if [ $# -lt 1 ]
 then
-	echo "LgEval Label graph edge filter"
-	echo "Copyright (c) R. Zanibbi, H. Mouchere, 2012-2013"
+	echo "LgEval lgfilter: Label graph edge filter"
+	echo "Copyright (c) R. Zanibbi, H. Mouchere, 2012-2014"
 	echo ""
 	echo "Usage: lgfilter <infile> [outfile]"
 	echo ""

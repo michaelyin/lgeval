@@ -4,7 +4,7 @@
 #	- Warning: this assumes that edges and nodes have a single label.
 #
 # Author: R. Zanibbi, March 2013
-# Copyright (c) 2012, 2013 Richard Zanibbi and Harold Mouchere
+# Copyright (c) 2012-2014 Richard Zanibbi and Harold Mouchere
 ###########################################################################
 
 import sys

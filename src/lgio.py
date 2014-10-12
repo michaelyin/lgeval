@@ -1,10 +1,10 @@
 ################################################################
 # lgio.py
 #
-# Input/Output routines.
+# Input/Output routines for label graphs.
 #
 # Author: Richard Zanibbi
-# Copyright (c) 2012, Richard Zanibbi and Harold Mouchere
+# Copyright (c) 2012-2014 Richard Zanibbi and Harold Mouchere
 ################################################################
 import sys
 import csv

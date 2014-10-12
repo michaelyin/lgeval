@@ -2,10 +2,10 @@
 # metricDist.py
 #
 # Filter to collect the distribution for a metric in a given 
-# .m file.
+# .m (metrics) file.
 #
 # Author: R. Zanibbi, June 2012
-# Copyright (c) 2012, Richard Zanibbi and Harold Mouchere
+# Copyright (c) 2012-2014 Richard Zanibbi and Harold Mouchere
 ################################################################
 import sys
 import csv

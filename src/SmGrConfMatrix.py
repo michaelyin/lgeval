@@ -4,10 +4,13 @@
 # Structure confusion histograms. 
 #
 # Author: H. Mouchere, June 2013
-# Copyright (c) 2013 Richard Zanibbi and Harold Mouchere
+# Copyright (c) 2013-2014 Richard Zanibbi and Harold Mouchere
 ################################################################
 
 from operator import itemgetter
+
+# Set graph size.
+GRAPH_SIZE=100
 
 class SmDict(object):
 	"""This is not a real dictionnary but it is like a dictionnary using only 
@@ -18,7 +21,7 @@ class SmDict(object):
 	
 	def __init__(self,*args):
 		self.myitems = []
-		
+	
 	def set(self, sg, value):
 		for i in range(len(self.myitems)):
 			if(sg == self.myitems[i][0]):
@@ -48,11 +51,13 @@ class SmDict(object):
 		for (k,v) in self.myitems:
 			res = res + "(" + str(k) + ":" + str(v) + "),"
 		return res[:-1] + "}"
-	def toHTML(self):
+	def toHTML(self, limit = 0):
 		html = '<table border="1">\n'
-		for (g,v) in self.myitems:
-			html = html + '<tr><td>\n' + g.toSVG(100) + '</td>\n'
-			html = html + '<td>'+str(v)+'</td></tr>\n'
+		sortedList = sorted(self.myitems, key=lambda t:t[1].get(), reverse=True)
+		for (g,v) in sortedList:
+			if (v.get() >  limit):
+					html = html + '<tr><td>\n' + g.toSVG(100) + '</td>\n'
+					html = html + '<td>'+str(v)+'</td></tr>\n'
 		return html + '</table>\n'
 		
 
@@ -71,8 +76,10 @@ class Counter(object):
                                 self.list = args[1]
 	def incr(self,elem=None):
 		self.value = self.value +1
-                if elem != None:
-                        self.list.append(elem)
+		if elem != None:
+			self.list.append(elem)
+		else:
+			self.list = [ elem ]
 	def get(self):
 		return self.value
 	def set(self,v):
@@ -100,12 +107,26 @@ class ConfMatrix(object):
 	def __init__(self,*args):
 		self.mat = SmDict()
 	
-	def incr(self, row, column,elem=None):
+	def size(self):
+		return len(self.mat.myitems)
+
+	def incr(self, row, column, elem=None):
                 """ add 1 (one) to the counter indexed by row and column
                 an object can be added in the attached list"""
 		self.mat.get(row, SmDict).get(column,Counter).incr(elem)
 	def __str__(self):
 		return str(self.mat)
+
+	def errorCount(self):
+		count = 0
+		for (obj,smDict) in self.mat.getIter():
+			count += sum([v.get() for (_,v) in smDict.getIter()])
+			#nbE = Counter()
+			#for (_,c) in errmat.getIter():
+			#	nbE = nbE + sum([v for (_,v) in c.getIter()], Counter())
+			#count += nbE.get()
+		return count
+
 	def toHTMLfull(self, outputStream):
 		i = 0
 		allErr = SmDict()
@@ -134,54 +155,96 @@ class ConfMatrix(object):
 			outputStream.write('</tr>\n')
 		outputStream.write('</table>\n<p>')
 
-	def toHTML(self, outputStream, limit = 0, viewerURL="", redn = [], rede = []):
+	def toHTML(self, outputStream, limit = 0, targetLimit = 1, viewerURL="", redn = [], rede = [], parentObject=0):
                 """ write in the output stream the HTML code for this matrix and
                 return a Counter object with
-                the number of non shown errors and the list of hidden elements
-                The list of files with error is prefixed with the param viewerURL
+                the number of unshown errors and the list of hidden elements
+                The list of files with errors is prefixed with the param viewerURL
                 in the href attribute."""
-                #print "limit="+str(limit)
-		outputStream.write(' <table border="1"><tr>')
+		
 		arrow = True
 		hiddenErr = Counter()
 		sortedList = []
-                # first count all error for each sub structure
+        # first count all error for each sub structure
 		for (rowG,col) in self.mat.getIter():
 			nbE = sum([v for (_,v) in col.getIter()],Counter())
 			sortedList.append((rowG,col,nbE))
+		
+		# Show each confused stroke-level graph target in decreasing order of frequency.
 		sortedList = sorted(sortedList, key=lambda t:t[2].get(), reverse=True)
+		tindex = 1
+		graphSize=int(GRAPH_SIZE * 1.0)
+		outputStream.write('<table valign="top">')
+		outputStream.write('<tr><th>' \
+		+ '<input type="checkbox" id="Obj' + str(parentObject) + '"></th><th>Targets</th></tr>\n')
 		for (rowG,col,nbE) in sortedList:
-                        #print str(nbE) + " > " + str(limit) + " = " + str(nbE > limit) + str(nbE.__class__)
-			if int(nbE) > limit:
-                                #print "  OK"
-				outputStream.write('<tr><th>\n')
-				outputStream.write(rowG.toSVG(100,arrow))
-				outputStream.write( 'Total err = '+str(nbE)+'</th>')
+			if int(nbE) >= limit:
+				
+				outputStream.write('<tr><th text-align="center" valign="top"><input type="checkbox" id="Obj' + str(parentObject) + 'Target' + str(tindex) + '" name="fileList">' + str(tindex) + '</th><th>' \
+						+ str(nbE) + ' errors<br><br>\n')
+				outputStream.write(rowG.toSVG(graphSize,arrow))
+				outputStream.write('\n</th>')
+				
+				# ** Now show specific stroke-level confusions for target graph.
+				locHiddenErr = Counter()
 				arrow = False
-                                locHiddenErr = Counter()
-				for (g,v) in col.getIter():
-					if v.get() > limit:
-						outputStream.write('<td>')
-						outputStream.write(g.toSVG(100,arrow))
-                                                viewStr = ""
-                                                if(len(v.getList())> 0):
-                                                        viewStr = '<a href="'+viewerURL + (",").join(v.getList())+'"> View </a>'
-						outputStream.write('<h2>'+str(v) + '</h2>'+viewStr+'</td>')
+
+				# Critical: sort by frequency for specific confusion instances.
+				pairs = sorted(col.getIter(), key=lambda p:p[1].get(), reverse=True)
+				findex = 1
+				for (g,v) in pairs:
+					if v.get() >= limit:
+						value = (" ").join(v.getList())
+						outputStream.write('<td><input type="checkbox" name="fileList" id="Obj' + str(parentObject) + 'Target' + str(tindex) + 'Files' + str(findex) + '" class="fileCheck" value="' \
+								+ value + '">')
+						outputStream.write('\n'+str(v) + ' errors<br><br>')
+						outputStream.write(g.toSVG(graphSize,arrow))
+						outputStream.write('</td>\n')
 					else:
+						# Tricky; this counter object __str__ gives its list
+						# size, but '+' concatenates entries.
 						locHiddenErr = locHiddenErr + v
-                                if(len(locHiddenErr.getList())> 0):
-                                        outputStream.write('<td><a href="' +viewerURL+ (",").join(locHiddenErr.getList())+'"> View other Err </a></td>')
-                                hiddenErr = hiddenErr + locHiddenErr 
-				outputStream.write('</tr>\n')
+					
+					findex += 1
+				
+				# Write only one entry for 'other' errors. Do this
+				# Whenever a target/row is shown for completeness.
+				if len(locHiddenErr.getList()) > 0:
+					value = (" ").join(locHiddenErr.getList())
+					outputStream.write('<td valign="top">' \
+							+ '<input type="checkbox" id="Obj' + str(parentObject) + 'Target' + str(tindex) + 'Files' + str(findex) + '" name="fileList" class="fileCheck" value="' \
+							+ value + '">' + str(locHiddenErr) + ' errors<br><br>')
+					outputStream.write('<center><font size=2>Other<br>Errors</font></center></td>')
+
+				outputStream.write('</tr>')
+			
+			elif int(str(nbE)) >= targetLimit:
+				
+				# This is for errors less frequent than the threshold
+				# for different target stroke-level graphs.
+				locHiddenErr = Counter()
+				for (g,v) in col.getIter():
+					locHiddenErr = locHiddenErr + v
+
+				# Show all ground truth target errors with counts, so that
+				# object-level count is sum of confused stroke-level graphs.
+				value = (" ").join(locHiddenErr.getList())
+				outputStream.write('<tr><th valign="top"><input type="checkbox" id="Obj' + str(parentObject) + 'Target' + str(tindex) + '"> ' + str(nbE) + ' errors<br><br>\n')
+				outputStream.write(rowG.toSVG(graphSize,arrow))
+				outputStream.write('</th><td valign=\"top\"><input type="checkbox" class="fileCheck" id="Obj' + str(parentObject) + 'Target' + str(tindex) + 'Files1" value="' + value + '">' +
+					str(locHiddenErr) + ' errors<br><br>')
+				outputStream.write('<center><font size=2>Other<br>Errors</font></center></td></tr>')
+				
 			else:
-				hiddenErr = hiddenErr + nbE 
-                               
-                outputStream.write('</table><p> Total hidden errors : ')
-                viewStr = ""
-                if(len(hiddenErr.getList())> 0):
-                        viewStr = '<a href="' +viewerURL+ (",").join(hiddenErr.getList())+'"> View </a>'
-		outputStream.write(str(hiddenErr) + viewStr + '</p>')
-                return hiddenErr
+				hiddenErr = hiddenErr + nbE
+
+			# Increment counter for stroke-level targets.
+			tindex += 1
+		
+		# End this entry.
+		outputStream.write('</table>\n')
+			
+		return hiddenErr
 		
 
 class ConfMatrixObject(object):
@@ -189,19 +252,32 @@ class ConfMatrixObject(object):
 	def __init__(self,*args):
 		self.mat = SmDict()
 	
+	def size(self):
+		return len(self.mat.myitems)
+
 	def incr(self, obj, row, column,elem=None):
 		self.mat.get(obj, ConfMatrix).incr(row, column,elem)
 
 	def __str__(self):
 		return str(self.mat)
 
+	def errorCount(self):
+		count = 0
+		for (obj,errmat) in self.mat.getIter():
+			nbE = Counter()
+			for (_,c) in errmat.mat.getIter():
+				nbE = nbE + sum([v for (_,v) in c.getIter()], Counter())
+			count += nbE.get()
+		return count
 
-	def toHTML(self, outputStream, limit = 0,viewerURL="", redn = {}):
+	def toHTML(self, outputStream, limit = 0, viewerURL="", redn = {}):
                 """ write in the output stream the HTML code for this matrix and
                 use the ConfMatrix.toHTML to write the submatrices.
                 The list of files with error is prefixed with the param viewerURL
                 in the href attribute. """
-                outputStream.write(' <table border="2"><tr>')
+		outputStream.write(' <table><tr>')
+		outputStream.write('<th><input type="checkbox" id="Obj"></th><th>Object Targets</th><th>Primitive Targets and Errors</th>')
+		outputStream.write('</tr>')
 		arrow = True
 		hiddenErr = Counter()
 		sortedList = []
@@ -213,20 +289,31 @@ class ConfMatrixObject(object):
 			sortedList.append((obj,errmat,nbE))
 		sortedList = sorted(sortedList, key=lambda t:t[2].get(), reverse=True)
 
+		# Entries for object graphs ('main' rows)
+		oindex = 1
+		graphSize=GRAPH_SIZE
 		for (obj,errmat,nbE) in sortedList:
-			if int(nbE) > limit:
-				outputStream.write('<tr><th>\n')
-				outputStream.write(obj.toSVG(200,arrow))
-				outputStream.write( 'Total err = '+str(nbE)+'</th><td>')
+			if int(nbE) >= limit:
+				outputStream.write('<tr><th valign="top">' \
+						+ str(oindex) + '</th>')
+				outputStream.write('<th valign="top">\n')
+				outputStream.write(str(nbE) + " errors<br><br>")
+				outputStream.write(obj.toSVG(graphSize,arrow,'box'))
+				outputStream.write('</th><td>')
 				arrow = False
-				hiddenErr = hiddenErr + errmat.toHTML(outputStream,limit, viewerURL)
+				# Treat 'object-level' matrix different: show all missed targets.
+				hiddenErr = hiddenErr + errmat.toHTML(outputStream,limit,viewerURL,parentObject=oindex)
 				outputStream.write('</td></tr>\n')
 			else:
 				hiddenErr = hiddenErr + nbE
-		outputStream.write('</table><p> Total hidden errors : ')
-                viewStr = ""
-                if(len(hiddenErr.getList())> 0):
-                        viewStr = '<a href="' + viewerURL+ (",").join(hiddenErr.getList())+'"> View </a>'
+			
+			# Increment count for object targets
+			oindex += 1
+		
+		outputStream.write('</table><p><b>Additional errors:</b> ')
+		viewStr = ""
+		if(len(hiddenErr.getList())> 0):
+			viewStr = '<a href="' + viewerURL+ (",").join(hiddenErr.getList())+'"> View </a>'
 		outputStream.write(str(hiddenErr) + viewStr + '</p>')
 		
 	

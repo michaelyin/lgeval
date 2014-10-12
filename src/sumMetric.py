@@ -5,11 +5,20 @@
 # and outputs summary statistics and global performance metrics.
 # 
 # Author: H. Mouchere and R. Zanibbi, June 2012
-# Copyright (c) 2012, Richard Zanibbi and Harold Mouchere
+# Copyright (c) 2012-2014, Richard Zanibbi and Harold Mouchere
 ################################################################
 import sys
 import csv
 import math
+import time
+import os
+
+def fmeasure(R,P):
+	"""Harmonic mean of recall and precision."""
+	value = 0
+	if R > 0 or P > 0:
+		value = (2 * R * P)/(R+P)
+	return value
 
 def meanStdDev( valueList, scale ):
 	"""Compute the mean and standard deviation of a *non-empty* list of numbers."""
@@ -93,9 +102,18 @@ def printHist(hist,N,field_width):
                         vals.append(0)
                 cum += vals[-1]
                 cumulVals.append(cum)
-        printTable(field_width,  range(0,N))
-        printTable(field_width, vals)
-        printTable(field_width, cumulVals)
+		
+		# RZ: Inefficient but simple - sum all values, substracted accumulated ones.
+		total = 0
+		for key in hist.keys():
+			total += hist[key]
+
+		remaining = total - cum
+
+        printTable(field_width, [ '' ] +  range(0,N) + ['>' + str(N-1)])
+        print('----------------------------------------------------------------------------------')
+        printTable(field_width, [ 'Files' ] + vals + [ remaining ])
+        printTable(field_width, [ 'Cumulative' ] + cumulVals + [ total ])
 
 
 
@@ -140,7 +158,7 @@ def main():
 	allSum = {}
 	allZeroCount = {}
 	zeroFileList = {}
-        allHist = {}
+	allHist = {}
 	for v in allValues.keys():
 		allSum[v] = sum(allValues[v])
 		#print(str(v) + " = " + str(allSum[v]))
@@ -171,6 +189,9 @@ def main():
 	dsTotal = int(allSum["D_S"])
 	dbTotal = int(allSum["D_B"])
 	duTotal = int(allSum["dPairs"])
+	
+	dEdgeClassConflicts = int(allSum["edgeDiffClassCount"])
+
 	if showCSV:
 		print("D_C,D_L,D_S,D_B,D_B(%),var,D_E(%),var,wD_E(%),var")
 		sys.stdout.write(intMetric(allSum,"D_C") + "," +intMetric(allSum, "D_L") \
@@ -181,43 +202,47 @@ def main():
 		print("")
 	else:
 		fieldWidth = 10
-		print("-----------------------------------------------------------------------------------")
-		print("  PRIMITIVES")
-		print("-----------------------------------------------------------------------------------")
-		printTable(fieldWidth,['','Rate(%)','Total','Correct','Errors','SegErr','RelErr'])
+		
+		# Add file name and date.
+		print("LgEval Evaluation Summary")
 		print("")
-		print("COMPLETE GRAPHS (FILES)")
-		printTable(fieldWidth,['Graph',100 * float(correctExps)/nbEM,nbEM,correctExps,nbEM-correctExps])
+		print(os.path.splitext( os.path.split(fileName)[1]) )[0]
+		print(time.strftime("%c"))
 		print('')
 
-		print("DIRECTED METRICS")
+		print("****  PRIMITIVES   **************************************************************")
+		print('')
+		printTable(fieldWidth,['Directed','Rate(%)','Total','Correct','Errors','SegErr','ClErr','RelErr'])
+		print("---------------------------------------------------------------------------------")
 		nodeRate = 100.0
 		if nodes > 0:
 			nodeRate = 100 * float(nodes-dcTotal)/nodes
-		printTable(fieldWidth,['Node', nodeRate, int(allSum["nNodes"]), nodes - dcTotal, dcTotal ])
+		printTable(fieldWidth,['Nodes', nodeRate, int(allSum["nNodes"]), nodes - dcTotal, dcTotal ])
 
 	
 		edgeRate = 100.0
 		if edges > 0:
 			edgeRate = 100 * float(edges - dlTotal) / edges
-		printTable(fieldWidth,['Edge', edgeRate, edges, edges - dlTotal, dlTotal,\
-				dsTotal, dlTotal-dsTotal])
+		printTable(fieldWidth,['Edges', edgeRate, edges, edges - dlTotal, dlTotal,\
+				dsTotal - dEdgeClassConflicts, dEdgeClassConflicts, dlTotal-dsTotal])
 
 		labelRate = 100.0
 		if nodes + edges > 0:
 			labelRate =  100 *(nodes + edges - dbTotal)/float(nodes + edges)
-		printTable(fieldWidth,['Node+Edge', labelRate, nodes + edges, nodes + edges - dbTotal, dbTotal])
+		print('')
+		printTable(fieldWidth,['Total', labelRate, nodes + edges, nodes + edges - dbTotal, dbTotal])
 
 	
-		print("")
-		# REPEATED FOR CONVENIENCE
-		print("UNDIRECTED METRICS")
-		printTable(fieldWidth,['Node', nodeRate, int(allSum["nNodes"]), nodes - dcTotal, dcTotal ])
+		print('\n')
+		printTable(fieldWidth,['Undirected','Rate(%)','Total','Correct','Errors','SegErr','ClErr','RelErr'])
+		print("---------------------------------------------------------------------------------")
+		printTable(fieldWidth,['Nodes', nodeRate, int(allSum["nNodes"]), nodes - dcTotal, dcTotal ])
 
 		undirNodeRel = 100.0
 		if edges > 0:
 			undirNodeRel = 100 * (float(edges)/2 - duTotal)/(edges/2)
-		printTable(fieldWidth,['EdgePair', undirNodeRel, edges/2, int(edges)/2 - duTotal, duTotal, int(allSum["segPairErrors"]), duTotal - int(allSum["segPairErrors"])])
+		mergeClassErrors = int(allSum["undirDiffClassCount"])
+		printTable(fieldWidth,['Node Pairs', undirNodeRel, edges/2, int(edges)/2 - duTotal, duTotal, int(allSum["segPairErrors"] - mergeClassErrors), mergeClassErrors, duTotal - int(allSum["segPairErrors"])])
 
 		nodeAllRate = 100.0
 		nodeAllCorrect = 100.0
@@ -229,9 +254,16 @@ def main():
 			nodeAllCorrect = int(allSum["nodeCorrect"])
 			nodeAllRate = 100 * float(nodeAllCorrect)/nodes
 			nodePairCorrect = 100 * float(correctNodesAndPairs)/(nodes + pairCount)
+		
+		print('')
+		printTable(fieldWidth,['Total', nodePairCorrect, nodes + pairCount, int(correctNodesAndPairs), int(dcTotal + duTotal) ])
 
-		printTable(fieldWidth,['Node+Pair', nodePairCorrect, nodes + pairCount, int(correctNodesAndPairs), int(dcTotal + duTotal) ])
-
+		print('')
+		print('     SegErr: merge/split   ClErr: valid merge class error   RelErr: relation error')
+		
+		
+		# LEAVING in case this is of use later - hoping that new spreadsheet makes these statistics and
+		# histograms easy to compute as-needed.
 
 		# NUMBER OF CORRECT NODES
 		#print("")
@@ -239,34 +271,58 @@ def main():
 		#printTable(fieldWidth,['*Nodes-CL',nodeAllRate,int(allSum["nNodes"]),nodeAllCorrect, nodes - nodeAllCorrect])
 
 
-		# Compute bipartite graph (BG) metrics.
-		print("")
-		print("HAMMING DISTANCES (see DRR 2013 paper)")
-		printTable(fieldWidth,['','Mean','Stdev'])
-		for metric in [
-				('D_B',1),
-				('D_C', 1),
-				('D_L',1),
-				('D_S',1),
-				('D_Bn(%)',100),
-				('D_E(%)',100),
-				]:
-			reportMeanStdDev(fieldWidth,metric[0],allValues[metric[0]],\
-					metric[1])
-		reportWMeanStdDev(fieldWidth,'W-D_E(%)',allValues["D_E(%)"],allValues["nNodes"],100)
+		# Compute hamming distance metric distributions.
+		#print("\n")
+		#printTable(fieldWidth,['Hamming D.','Mean','StdDev'])
+		#print("---------------------------------------------------------------------------")
+		#for metric in [
+		#		('D_B',1),
+		#		('D_C', 1),
+		#		('D_L',1),
+		#		('D_S',1),
+		#		('D_R',1),
+		#		('D_Bn(%)',100),
+		#		('D_E(%)',100),
+		#		]:
+		#	reportMeanStdDev(fieldWidth,metric[0],allValues[metric[0]],\
+		#			metric[1])
+		#reportWMeanStdDev(fieldWidth,'W-D_E(%)',allValues["D_E(%)"],allValues["nNodes"],100)
+		#print('')
+		#print("      D_B =  D_C + D_L  =  D_C + D_S + D_R")
+		#print("      D_B: All labels; D_C: Nodes; D_L: Dir. edges; D_S: Seg/Obj edges")
+		#print("      D_R: Relationship edges")
+
+		#print("\n")
+		#print("Node Label Error Histogram (D_C)")
+		#printHist(allHist['D_C'],6,fieldWidth)
+		#print("\n")
+
+
+		#print("Directed Edge Label Error Histogram (D_L)")
+		#printHist(allHist['D_L'],6,fieldWidth)
+		#print("\n")
+
+		print("\n")
+
+		print("****  OBJECTS   **************************************************************************") 
+		print('')
+		printTable(fieldWidth,['','Recall(%)','Prec(%)','2RP/(R+P)','Targets','Correct','FalseNeg','*Detected','*FalsePos'])
+		print("------------------------------------------------------------------------------------------")
 		
 		# Compute segmentation and classification errors.
 		numSegments = int(allSum["nSeg"])
 		detectedSegs = int(allSum["detectedSeg"])
-		correctSegments = int(allSum["CorrectSegments"]) #int(detectedSegs - allSum["SegError"])
+		correctSegments = int(allSum["CorrectSegments"]) 
 		classErrors = int(allSum["ClassError"])
-		correctClass = int(allSum["CorrectSegmentsAndClass"]) #detectedSegs - int(allSum["ClassError"])
+		correctClass = int(allSum["CorrectSegmentsAndClass"]) 
+
+		# DEBUG: now explicitly record the number of correct segment rel. edges.
 		numSegRelEdges = int(allSum["nSegRelEdges"])
 		detectedSegRelEdges = int(allSum["dSegRelEdges"])
 		segRelErrors = int(allSum["SegRelErrors"])
-		
-		if detectedSegRelEdges > 0:
-			correctSegRelEdges = detectedSegRelEdges - segRelErrors
+		correctSegRelEdges = int(allSum["CorrectSegRels"])
+		correctSegRelLocations = int(allSum["CorrectSegRelLocations"])
+
 		segRelRecall = 100.0
 		if numSegRelEdges > 0:
 			segRelRecall = 100*float(correctSegRelEdges)/numSegRelEdges
@@ -277,13 +333,7 @@ def main():
 		if detectedSegRelEdges > 0:
 			relFalsePositive = segRelErrors
 
-	
-		print("")
-		print("-----------------------------------------------------------------------------------")
-		print("  OBJECTS")
-		print("-----------------------------------------------------------------------------------")
 
-		printTable(fieldWidth,['','Recall(%)','Prec(%)','Total(GT)','Correct','FalseNeg','*Detected','*FalsePos'])
 		segRate = 100.0
 		segClassRate = 100.0
 		if numSegments > 0:
@@ -295,40 +345,111 @@ def main():
 			segPrec = 100 * float(correctSegments)/detectedSegs
 			segClassPrec = 100*float(correctClass)/detectedSegs
 
-		print("")
-		#print("OBJECT AND OBJECT RELATIONSHIP DETECTION")
-		printTable(fieldWidth,['Segments', segRate, \
-				segPrec,
+
+		segRelLocRecall = 100.0
+		if numSegRelEdges > 0:
+			segRelLocRecall = 100 * float (correctSegRelLocations) / numSegRelEdges
+		segRelLocPrecision = 100.0
+		if detectedSegRelEdges > 0:
+			segRelLocPrecision = 100 * float(correctSegRelLocations) / detectedSegRelEdges
+		segRelLocFalsePositive = 0
+		if detectedSegRelEdges > 0:
+			segRelLocFalsePositive = detectedSegRelEdges - correctSegRelLocations 
+
+		segRelativeRecall = '(Empty)'
+		if correctSegments > 0:
+			segRelativeRecall = 100 * float(correctClass)/correctSegments
+
+
+		segRelativeRelRecall = '(Empty)' 
+		if correctSegRelLocations > 0:
+			segRelativeRelRecall = 100 * float(correctSegRelEdges)/correctSegRelLocations
+
+		printTable(fieldWidth,['Objects', segRate, \
+				segPrec, fmeasure(segRate,segPrec),
 				numSegments, correctSegments, numSegments - correctSegments,\
 						detectedSegs, detectedSegs - correctSegments ])
 
 		
-		printTable(fieldWidth,['Seg+Class', segClassRate, \
-				segClassPrec, numSegments, correctClass, numSegments - correctClass,\
+		printTable(fieldWidth,['+ Classes', segClassRate, \
+				segClassPrec, fmeasure(segClassRate, segClassPrec), \
+				numSegments, correctClass, numSegments - correctClass,\
 				detectedSegs, detectedSegs - correctClass])
 
+		printTable(fieldWidth,['Class/Det', segRelativeRecall,'','', \
+				correctSegments, correctClass])
+
+		print('')
 		printTable(fieldWidth,['Relations',\
+				segRelLocRecall, \
+				segRelLocPrecision, \
+				fmeasure(segRelLocRecall, segRelLocPrecision), \
+				numSegRelEdges,\
+				correctSegRelLocations,\
+				numSegRelEdges - correctSegRelLocations, \
+				intMetric(allSum, "dSegRelEdges"),\
+				segRelLocFalsePositive])
+
+
+		printTable(fieldWidth,['+ Classes',\
 				segRelRecall, \
 				segRelPrecision, \
+				fmeasure(segRelRecall, segRelPrecision), \
 				numSegRelEdges,\
 				correctSegRelEdges,\
 				numSegRelEdges - correctSegRelEdges, \
 				intMetric(allSum, "dSegRelEdges"),\
 				relFalsePositive])
 
+		printTable(fieldWidth,['Class/Det', segRelativeRelRecall, '', '', \
+				correctSegRelLocations, correctSegRelEdges])
 
-		#print("")
-		#print("CORRECTLY LABELED OBJECTS")
-		#printTable(fieldWidth,['','C.Rate(%)','Total','Correct','Error'])
+		print("\n     2RP/(R+P): harmonic mean (f-measure) for (R)ecall and (P)recision")
+		print("     Class/Det: (correct detection and classification) / correct detection") 
+		print("\n")
 
-		#classRate = 100.0
-		#if correctSegments > 0:
-		#	classRate = 100 *float(correctClass)/correctSegments
-		#printTable(fieldWidth,['*Segs-CL', classRate, correctSegments, correctClass, correctSegments - correctClass])
-		print("")
+		print("****  FILES  ***************************************")
+		print('')
+		printTable(fieldWidth,['','Rate(%)','Total','Correct','Errors'])
+		print('---------------------------------------------------')
+		correctSegments = 0
+		if 1 in allHist['hasCorrectSegments']:
+			correctSegments = allHist['hasCorrectSegments'][1]
+		correctRelLocs = 0
+		if 1 in allHist['hasCorrectRelationLocations']:
+			correctRelLocs = allHist['hasCorrectRelationLocations'][1]
+		correctSegAndClass = 0
+		if 1 in allHist['hasCorrectSegLab']:
+			correctSegAndClass = allHist['hasCorrectSegLab'][1]
+		correctRelAndClass = 0
+		if 1 in allHist['hasCorrectRelLab']:
+			correctRelAndClass = allHist['hasCorrectRelLab'][1]
+		correctStructure = 0
+		if 1 in allHist['hasCorrectStructure']:
+			correctStructure = allHist['hasCorrectStructure'][1]
+		
 
-                print ("ERROR HISTOGRAMM AT PRIMITIVE LEVEL")
-                printHist(allHist['D_B'],5,fieldWidth)
+		objRelative = '(Empty)' if correctSegments <  1 else 100 * float(correctSegAndClass)/correctSegments 
+		printTable(fieldWidth,['Objects',100 * float(correctSegments)/nbEM,nbEM,correctSegments,nbEM-correctSegments])
+		printTable(fieldWidth,['+ Classes',100 * float(correctSegAndClass)/nbEM, nbEM, correctSegAndClass, nbEM - correctSegAndClass])
+		printTable(fieldWidth,['Class/Det',objRelative,correctSegments,correctSegAndClass,'']) #correctSegments-correctSegAndClass])
+
+		print('')
+		relRelative = '(Empty)' if correctRelLocs < 1 else 100 * float(correctRelAndClass)/correctRelLocs
+		printTable(fieldWidth,['Relations',100 * float(correctRelLocs)/nbEM,nbEM,correctRelLocs,nbEM-correctRelLocs])
+		printTable(fieldWidth,['+ Classes',100 * float(correctRelAndClass)/nbEM, nbEM, correctRelAndClass, nbEM - correctRelAndClass])
+		printTable(fieldWidth,['Class/Det',relRelative, correctRelLocs,correctRelAndClass,'']) #correctRelLocs - correctRelAndClass])
+
+		print('')
+		expRelative = '(Empty)' if correctStructure < 1 else 100 * float(correctExps)/correctStructure
+		printTable(fieldWidth,['Structure',100 * float(correctStructure)/nbEM, nbEM, correctStructure, nbEM - correctStructure])
+
+		printTable(fieldWidth,['+ Classes',100 * float(correctExps)/nbEM,nbEM,correctExps,nbEM-correctExps,'*Final'])
+		printTable(fieldWidth,['Class/Det',expRelative,correctStructure,correctExps,'']) #correctStructure-correctExps])
+		print('')
+		#print('  * Structure + Classes provides the \'correct\' recognition rate:')
+		#print('    this includes only files with correct objects, correctly related objects,')
+		#print('    and both correct object and relationship class labels.')
 
 
 main()

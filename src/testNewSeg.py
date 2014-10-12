@@ -5,7 +5,7 @@
 #
 # Authors: R. Zanibbi, H. Mouchere
 #	June-August 2012
-# Copyright (c) 2012, Richard Zanibbi and Harold Mouchere
+# Copyright (c) 2012-2014, Richard Zanibbi and Harold Mouchere
 ################################################################
 from bg import *
 from bestBG import *

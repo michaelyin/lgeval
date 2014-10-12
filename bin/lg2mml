@@ -12,12 +12,12 @@
 
 if [ $# -lt 1 ]
 then
-	echo "LgEval Label graph to text converter"
-	echo "Copyright (c) R. Zanibbi, H. Mouchere, 2012-2013"
+	echo "LgEval lg2mml: Label graph to Presentation MathML converter"
+	echo "Copyright (c) R. Zanibbi, H. Mouchere, 2012-2014"
 	echo ""
 	echo "Usage: lg2mml file.lg"
 	echo ""
-	echo "Converts a label graph file files to a MathML file,"
+	echo "Converts a label graph file to a MathML file,"
 	echo "written as file.mml to the current directory."
 	exit 0
 fi

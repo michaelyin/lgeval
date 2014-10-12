@@ -7,8 +7,8 @@
 #   is indicated using 'HOR' or 'R' edge labels, superscripts
 #   and subscripts by 'SUP' and 'SUB.'
 #
-# Author: R. Zanibbi, June 2012-Jan. 2013
-# Copyright (c) 2012 Richard Zanibbi and Harold Mouchere
+# Author: R. Zanibbi, June 2012
+# Copyright (c) 2012-2014 Richard Zanibbi and Harold Mouchere
 ################################################################
 
 import sys
@@ -227,11 +227,11 @@ def translate(lg, segId,  segPrimMap, edgeMap,  symbolMap, structureMap):
 			# DEBUG: Separate undefined labels into the 'noSubSupPairs' note
 			#   that this binds these undefined relationships before any hor.
 			#   adjacency relationship.
-			if not (relation == 'HOR' or relation == 'R'):
+			if not (relation == 'HOR' or relation == 'R' or relation == "Right"):
 				nodeRelationPairs += [ (nextChildId, relation) ]
 				if not (relation == 'SUB' or relation == 'SUP' or \
 						relation == 'Sub' or relation == 'Sup' or
-						not relation in structureMap.keys() and not relation == 'I' ):
+						not relation in structureMap.keys() and not relation == 'I' and not relation == 'Inside' ):
 					noSubSupPairs += [ (nextChildId, relation) ]
 				else:
 					subSupPairs += [ (nextChildId, relation) ]
@@ -290,19 +290,8 @@ def main():
 	(rootNodes, treeEdges, otherEdges) = lg.separateTreeEdges()
 
 	# Default symbol and structure mappings.
-	symbolMap = { \
-		'cos' : '\\cos',
-		'sqrt' : '\\sqrt'
-	}
-
-	structureMap = { \
-		('sqrt','CONTAINS') : ( '\\sqrt', 'CONTAINS' ),
-		('-','A','B') : ( '\\frac', 'A', 'B' ),
-		('SUP') : ('^','{ ',' } '),
-		('SUB') : ('_','{ ',' } '),
-		('R') : (' ','',''),
-		('HOR') : (' ','','')
-	}
+	symbolMap = { }
+	structureMap = { }
 
 	# A bit dirty; redefining the global maps.
 	if len(sys.argv) > 2:

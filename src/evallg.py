@@ -9,13 +9,14 @@
 # file containing all errors observed will be produced.
 #
 # Author: R. Zanibbi, June 2012
-# Copyright (c) 2012, Richard Zanibbi and Harold Mouchere
+# Copyright (c) 2012-2014 Richard Zanibbi and Harold Mouchere
 ################################################################
 import sys
 import csv
 from lg import *
 from lgio import *
 import SmGrConfMatrix
+import compareTools
 
 # for RIT web service :
 #INKMLVIEWER = "inkml_viewer/index.xhtml?path=../testdata/&files="
@@ -101,18 +102,22 @@ def runBatch(fileName, defaultFileOrder, confMat, confMatObj):
 		
 def main():
 	if len(sys.argv) < 3:
-		print("Usage: [[python]] evallg.py <file1.lg> <file2.lg> [diff/*]")
-		print("   OR  [[python]] evallg.py [batch] <filepair_list> [GT-FIRST] [MAT] [MATOBJ]")
+		print("Usage: [[python]] evallg.py <file1.lg> <file2.lg> [diff/*]  [INTER]")
+		print("   OR  [[python]] evallg.py <file1.lg> <file2.lg> MATRIX fileout")
+		print("   OR  [[python]] evallg.py [batch] <filepair_list> [GT-FIRST] [MAT] [MATOBJ] [INTER]")
 		print("")
 		print("    For the first usage, return error metrics and differences")
 		print("    for  label graphs in file1.lg and file2.lg.")
 		print("    A third argument will return just differences ('diff')")
-		print("    or just metrics (any other string).")
+		print("    or just metrics (any other string). ")
+		print("    If MATRIX option is used, 4 evaluations are done with the ")
+		print("    different matrix label filters and output in the fileout[ABCD].m]")
 		print("")
 		print("    For the second usage, a file is provided containing pairs of")
 		print("    label graph files, one per line (e.g. 'file1, GTruth').")
 		print("    A third optional column contains the file name which should be")
-		print("    linked to the error viewer")
+		print("    linked to the InkML viewer.")
+		print("")
 		print("    A CSV file containing metrics for all comparisons is written")
 		print("    to \"filepair_list.m\", and differences are written to a file")
 		print("    \"filepair_list.diff\". By default ground truth is listed")
@@ -120,22 +125,27 @@ def main():
 		print("    will result in the first element of each line being treated")
 		print("    as ground truth - this does not affect metrics (.m), but does")
 		print("    affect difference (.diff) output.")
+		print("")
 		print("    The MAT or MATOBJ option will create a HTML file with confusion Matrix")
-		print("    between substructure.")
+		print("    between substructures.")
 		print("    MAT will produce the subtructure at stroke level.")
 		print("    MATOBJ will produce the subtructure at object level.")
-                print("     (in both cases, the size of substructure is 2 or 3 nodes,")
-                print("      in both cases, only errors with at least 3 occurrences appear)")
+		print("     (in both cases, the size of substructure is 2 or 3 nodes,")
+		print("      in both cases, only errors with at least 3 occurrences appear)")
 		sys.exit(0)
 
 	showErrors = True
 	showMetrics = True
-
+	
+	if "INTER" in sys.argv:
+		compareTools.cmpNodes = compareTools.intersectMetric;
+		compareTools.cmpEdges = compareTools.intersectMetric;
+	
 	if sys.argv[1] == "batch":
 		# If requested, swap arguments.
 		defaultFileOrder = True
 		confMat = False
-                confMatObj = False
+		confMatObj = False
 		if len(sys.argv) > 3 and "GT-FIRST" in sys.argv:
 			print(">> Treating 1st column as ground truth.")
 			defaultFileOrder = False
@@ -149,21 +159,51 @@ def main():
 
 	else:
 		# Running for a pair of files: require default order of arguments.
-		if len(sys.argv) > 3:
-			if sys.argv[3] == 'diff':
-				showMetrics = False
-			else:
-				showErrors = False
 		fileName1 = sys.argv[1]
 		fileName2 = sys.argv[2]
-		n1 = Lg(fileName1)
-		n2 = Lg(fileName2)
-		out = n1.compare(n2)
+		if len(sys.argv) > 4 and  sys.argv[3] == 'MATRIX':
+			fileOut = sys.argv[4]
+			#print ("MODE MATRIX : " + fileOut)
+			todo = {'Mat':set(['*M']),'Col':set(['*C']),'Row':set(['*R']),'Cell':set(['*Cell'])}
+			compareTools.cmpNodes = compareTools.filteredMetric
+			compareTools.cmpEdges = compareTools.filteredMetric
+			for (n,s) in todo.items():
+				compareTools.selectedLabelSet = s
+				n1 = Lg(fileName1)
+				n2 = Lg(fileName2)
+				out	= n1.compare(n2)
+				outStream = open(fileOut+n+".m", 'w')
+				writeMetrics(out, outStream)
+				outStream.close()
+			compareTools.selectedLabelSet = set([])
+			compareTools.ignoredLabelSet = set(['*M','*C','*R','*Cell'])			
+			n1 = Lg(fileName1)
+			n2 = Lg(fileName2)
+			out	= n1.compare(n2)
+			outStream = open(fileOut+"Symb.m", 'w')
+			writeMetrics(out, outStream)
+			
+		else:
+			
+			if 'diff' in sys.argv:
+				showMetrics = False
+			elif 'm' in sys.argv:
+				showErrors = False
+			n1 = Lg(fileName1)
+			n2 = Lg(fileName2)
+			
+			if "INTER" in sys.argv:
+				n1.labelMissingEdges()
+				n2.labelMissingEdges()
+			# print n1.csv()
+			# print n2.csv()
+				
+			out = n1.compare(n2)
 
-		if showMetrics:
-			writeMetrics(out, sys.stdout)
-		if showErrors:
-			writeDiff(out[1],out[3],out[2], sys.stdout)
+			if showMetrics:
+				writeMetrics(out, sys.stdout)
+			if showErrors:
+				writeDiff(out[1],out[3],out[2], sys.stdout)
 
 main()
 

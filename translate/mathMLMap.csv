@@ -204,8 +204,10 @@ cos,->,<mi xml:id=_I_>\cos</mi>
 tan,->,<mi xml:id=_I_>\tan</mi>
 eq,->,<mo xml:id=_I_>=</mo>
 neq,->,<mi xml:id=_I_>\neq</mi>
+ne,->,<mi xml:id=_I_>\neq</mi>
 leq,->,<mi xml:id=_I_>\leq</mi>
 geq,->,<mi xml:id=_I_>\geq</mi>
+ge,->,<mi xml:id=_I_>\geq</mi>
 lt,->,<mo xml:id=_I_>\lt</mo>
 gt,->,<mo xml:id=_I_>\gt</mo>
 
@@ -320,27 +322,34 @@ STRUCTURE
 # Need to define unique set of labels for the competition.
 sqrt,I,->,<msqrt xml:id=_I_>,I,</msqrt>
 sqrt,C,->,<msqrt xml:id=_I_>,C,</msqrt>
-sqrt,CONTAINS,->,<msqrt xml:id=_I_>,CONTAINS,</msqrt>
+sqrt,Inside,->,<msqrt xml:id=_I_>,Inside,</msqrt>
 
 \sqrt,I,->,<msqrt xml:id=_I_>,I,</msqrt>
 \sqrt,C,->,<msqrt xml:id=_I_>,C,</msqrt>
-\sqrt,CONTAINS,->,<msqrt xml:id=_I_>,CONTAINS,</msqrt>
+\sqrt,Inside,->,<msqrt xml:id=_I_>,Inside,</msqrt>
 
 # RZ: Addition for nth-roots (e.g. cube roots, March 25)
+sqrt,I,Above,->,<mroot xml:id=_I_>,I,Above,</mroot>
+sqrt,C,Above,->,<mroot xml:id=_I_>,C,Above,</mroot>
+sqrt,Inside,Above,->,<mroot xml:id=_I_>,Inside,Above,</mroot>
+
 sqrt,I,A,->,<mroot xml:id=_I_>,I,A,</mroot>
 sqrt,C,A,->,<mroot xml:id=_I_>,C,A,</mroot>
-sqrt,CONTAINS,A,->,<mroot xml:id=_I_>,CONTAINS,A,</mroot>
-sqrt,CONTAINS,ABOVE,->,<mroot xml:id=_I_>,CONTAINS,ABOVE,</mroot>
+sqrt,Inside,Above,->,<mroot xml:id=_I_>,Inside,Above,</mroot>
 
 \sqrt,I,A,->,<mroot xml:id=_I_>,I,A,</mroot>
 \sqrt,C,A,->,<mroot xml:id=_I_>,C,A,</mroot>
-\sqrt,CONTAINS,A,->,<mroot xml:id=_I_>,CONTAINS,A,</mroot>
-\sqrt,CONTAINS,ABOVE,->,<mroot xml:id=_I_>,CONTAINS,ABOVE,</mroot>
 
+\sqrt,I,Above,->,<mroot xml:id=_I_>,I,Above,</mroot>
+\sqrt,C,Above,->,<mroot xml:id=_I_>,C,Above,</mroot>
+\sqrt,Inside,Above,->,<mroot xml:id=_I_>,Inside,Above,</mroot>
+
+-,Above,Below,->,<mfrac xml:id=_I_>,Above,Below,</mfrac>
 -,A,B,->,<mfrac xml:id=_I_>,A,B,</mfrac>
 -,ABOVE,BELOW,->,<mfrac xml:id=_I_>,ABOVE,BELOW,</mfrac>
 horizontal-line,ABOVE,BELOW,->,<mfrac xml:id=_I_>,ABOVE,BELOW,</mfrac>
 
+ANY,Above,Below,->,<munderover>,PARENT,Below,Above,</munderover>
 ANY,A,B,->,<munderover>,PARENT,B,A,</munderover>
 ANY,ABOVE,BELOW,->,<munderover>,PARENT,BELOW,ABOVE,</munderover>
 ANY,ULIMIT,LLIMIT,->,<munderover>,PARENT,LLIMIT,ULIMIT,</munderover>
@@ -353,7 +362,7 @@ ANY,SUBSC,SUPER,->,<msubsup>,PARENT,SUBSC,SUPER,</msubsup>
 # Individual relationships (arbitrary PARENT/CHILD relationships).
 #GRID,->,PARENT,CHILD
 
-
+Right,->,<mrow>,PARENT,CHILD,</mrow>
 R,->,<mrow>,PARENT,CHILD,</mrow>
 r,->,<mrow>,PARENT,CHILD,</mrow>
 HOR,->,<mrow>,PARENT,CHILD,</mrow>
@@ -370,16 +379,20 @@ SUPER,->,<msup>,PARENT,CHILD,</msup>
 
 A,->,<munder>,CHILD,PARENT,</munder>
 ABOVE,->,<munder>,CHILD,PARENT,</munder>
+Above,->,<munder>,CHILD,PARENT,</munder>
 a,->,<munder>,CHILD,PARENT,</munder>
 ULIMIT,->,<munder>,CHILD,PARENT,</munder>
 
 B,->,<munder>,PARENT,CHILD,</munder>
 BELOW,->,<munder>,PARENT,CHILD,</munder>
+Below,->,<munder>,PARENT,CHILD,</munder>
 b,->,<munder>,PARENT,CHILD,</munder>
 LLIMIT,->,<munder>,PARENT,CHILD,</munder>
 
-REL_DEFAULT,->,PARENT,CHILD
-%REL_DEFAULT,->,<mrow>,PARENT,CHILD,</mrow>
+
+REL_DEFAULT,->,<mrow>,PARENT,CHILD,</mrow>
+#REL_DEFAULT,->,PARENT,CHILD
+#%REL_DEFAULT,->,<mrow>,PARENT,CHILD,</mrow>
 
 # Accents
 # ?? Overline handlined by 'below' mapping above for simplicity

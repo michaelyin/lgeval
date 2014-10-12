@@ -5,7 +5,7 @@
 # histograms.
 #
 # Author: Harold Mouchere
-# Copyright (c) 2013 Richard Zanibbi and Harold Mouchere
+# Copyright (c) 2013-2014 Richard Zanibbi and Harold Mouchere
 ################################################################
 
 
@@ -132,50 +132,102 @@ class SmallGraph(object):
 
 	def __eq__(self,o):
 		return self.iso(o)
-	def toSVG(self, size = 200, withDef = True):
+	def toSVG(self, size = 200, withDef = True, nodeShape='circle'):
 		""" Generate a SVG XML string which draw the nodes (spread on a circle)
 		and edges with all label. 
 		Param size : the size of svg image (square) 
 		Param withDef : if True generate the definition of the arrow (needed only once in a HTML file)"""
+
 		svg = '<svg xmlns="http://www.w3.org/2000/svg" width="'+str(size)+'" height="'+str(size)+'">\n'
+		
 		n = len(self.nodes)
 		r = size / 10
 		R = (size - 2*r) /2
+		
 		if withDef:
-			svg = svg + '<defs>\
-    <marker id="Triangle"\
-      viewBox="0 0 10 10" refX="10" refY="5" \
-      markerUnits="strokeWidth"\
-      markerWidth="'+str(r/2)+'" markerHeight="'+str(r/2)+'"\
-      orient="auto">\
-      <path d="M 0 0 L 10 5 L 0 10 z" /> </marker>  </defs>'
+			svg = svg + '<defs><marker id="Triangle"\
+      			viewBox="0 0 10 10" refX="10" refY="5" \
+      			markerUnits="strokeWidth"\
+				fill="lightgray" \
+      			stroke="black" markerWidth="'+str(r/2.75)+'" markerHeight="'+str(r/2.5)+'"\
+      			orient="auto">\
+				<path d="M 0 0 L 10 5 L 0 10 z" /> </marker>  </defs>'
+		
+		# Draw nodes on a circle.
 		xy = [  (cmath.rect(R,2 * x* cmath.pi/n).real + size/2,cmath.rect(R,2 * x* cmath.pi/n).imag + size/2) for x in range(n)]
 		i = 0
+		parentCount = {}
+		childCount = {}
 		findXY = {}
-		for k in self.nodes.keys():
+
+		# Determine the number of times each node is a parent or child.
+		for (a,b) in self.edges.keys():
+			if a in parentCount.keys():
+				parentCount[a] += 1
+			else:
+				parentCount[a] = 1
+
+			if b in childCount.keys():
+				childCount[b] += 1
+			else:
+				childCount[b] = 1
+
+		# Construct list of parent nodes (in order of parent role freq.),
+		# add any missing nodes.
+		childPairs = childCount.items()		
+		sortedPairs = sorted(childPairs, key=lambda tuple: tuple[1])
+		nodes = self.nodes.keys()
+		if len(sortedPairs) > 0:
+			[nodes, counts] = zip(*sortedPairs)
+		nodeList = list(nodes)
+		for selfNode in self.nodes.keys():
+			if not selfNode in nodeList:
+				nodeList.append(selfNode)
+
+		#for k in self.nodes.keys():
+		for k in nodeList:
 			color = 'blue'
+			fillcolor= 'yellow'
 			if(k in self.rednodes):
 				color = 'red'
-			svg = svg + '<circle cx="'+str(xy[i][0]) + '" cy="'+str(xy[i][1]) + '"r="'+str(r)+'" fill="none" stroke="'+color+'"/>\n'
+				fillcolor='pink'
+
+			if nodeShape == 'circle':
+				svg = svg + '<circle cx="'+str(xy[i][0]) + '" cy="'+str(xy[i][1]) + '"r="'+str(r)+'" fill=' + fillcolor + ' stroke-width="2" stroke="'+color+'"/>\n'
+			else:
+				svg = svg + '<rect x="'+str(xy[i][0] - r) + '" y="'+str(xy[i][1] - r) + '"width="'+str(2*r)+'" height="' + str(2*r) + '" fill=' + fillcolor + ' stroke-width="2" stroke="'+color+'"/>\n'
+
 			lab = ",".join(self.nodes[k])
-			svg = svg + '<text 	x="'+str(xy[i][0]-0.75*r) + '" y="'+str(xy[i][1]+r/2) + '"	font-family="Arial"'+'font-size="'+str(1.5*r / sqrt(max([len(lab),1])))+'"'+'>' 
+			svg = svg + '<text 	x="'+str(xy[i][0]-0.5*r) + '" y="'+str(xy[i][1]+r/2) + '"	font-family="Times"'+'font-size="'+str(1.5*r / sqrt(max([len(lab),1])))+'"'+'>' 
 			svg = svg + lab + '</text>\n'
 			findXY[k] = i
 			i = i +1
-		R = R - r #the edges start on a smaller circle
+
+		# Draw edges on a (smaller) circle
+		R = R - r 
 		xy = [  (cmath.rect(R,2 * x* cmath.pi/n).real + size/2,cmath.rect(R,2 * x* cmath.pi/n).imag + size/2) for x in range(n)]
-		R = R - r #the labels are on a smaller circle
-		#xyL = [  (cmath.rect(R,2 * x* cmath.pi/n).real + size/2,cmath.rect(R,2 * x* cmath.pi/n).imag + size/2) for x in range(n)]
 		for (a,b) in self.edges.keys():
 			ai = findXY[a]			
 			bi = findXY[b]
-			color = 'black'
+			color = 'blue'
+			swidth='1.5'
+			useMarker=True
 			if((a,b) in self.rededges):
 				color = 'red'
-			svg = svg + '<line x1="'+str(xy[ai][0]) + '" y1="'+str(xy[ai][1]) + '" x2="'+str(xy[bi][0]) + '" y2="'+str(xy[bi][1]) + '" stroke="'+color+'" marker-end="url(#Triangle)" />\n'
+				swidth='2'
+			if((a,b) in self.edges and (b,a) in self.edges):
+				useMarker=False
+			
+			# Avoid using errors for bi-directional edges (segment edges)
+			if useMarker:
+				svg = svg + '<line stroke-width=' + swidth + ' x1="'+str(xy[ai][0]) + '" y1="'+str(xy[ai][1]) + '" x2="'+str(xy[bi][0]) + '" y2="'+str(xy[bi][1]) + '" stroke="'+color+'" marker-end="url(#Triangle)" />\n'
+			else:
+				svg = svg + '<line stroke-width=' + swidth + ' x1="'+str(xy[ai][0]) + '" y1="'+str(xy[ai][1]) + '" x2="'+str(xy[bi][0]) + '" y2="'+str(xy[bi][1]) + '" stroke="'+color+'" stroke-dasharray="1,5" />\n'
+			
 			lab = ",".join(self.edges[(a,b)])
-			svg = svg + '<text 	x="'+str((xy[ai][0] + xy[bi][0])/2) + '" y="'+str((xy[ai][1]+ xy[bi][1])/2) + '"	font-family="Arial"'+'font-size="'+str(r / sqrt(max([len(lab),1])))+'"'+'>' 
+			svg = svg + '<text x="'+str((xy[ai][0] + xy[bi][0] + 4)/2) + '" y="'+str((xy[ai][1]+ xy[bi][1])/2 - 4) + '"	font-family="Times"'+'font-size="'+str(1.5*r / sqrt(max([int(0.6 * len(lab)),1])))+'"'+'>' 
 			svg = svg + lab + '</text>\n'
+		
 		return svg + '</svg>\n'
 		
 		

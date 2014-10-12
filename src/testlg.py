@@ -3,9 +3,8 @@
 #
 # Test program for label graph class.
 #
-# Authors: R. Zanibbi, H. Mouchere
-#	June, 2012
-# Copyright (c) 2012, Richard Zanibbi and Harold Mouchere
+# Authors: R. Zanibbi and H. Mouchere, June 2012
+# Copyright (c) 2012-2014, Richard Zanibbi and Harold Mouchere
 ################################################################
 from lg import Lg
 #import smallGraph

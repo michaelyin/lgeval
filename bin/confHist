@@ -1,0 +1,49 @@
+#!/bin/bash
+
+if [ $# -lt 1 ]
+then
+	echo "LgEval confHist: Structure Confusion Histogram Generator"
+	echo "Copyright (c) R. Zanibbi, H. Mouchere, 2013-2014"
+	echo ""
+	echo "Usage: confHist dir1 dir2 [minCount] [strokes] OR"
+	echo "       confHist fileList [minCount] [strokes]"
+	echo ""
+	echo "Creates an .html file containing structure confusion histograms"
+	echo "at the object level. The histograms visualize errors by their"
+	echo "frequency when comparing files in dir1 vs. dir2 (dir2 is 'ground truth')."
+	echo ""
+	echo "If a file list is provided, then each line of the file"
+	echo "(where each line is: 'inputfile outputfile') is used for comparisons."
+	echo ""
+	echo "minCount is the minimum number of times an error should occur before"
+	echo "detailed information is provided in the confusion histogram. By default,"
+	echo "all errors are shown (minCount = 1)."
+	echo ""
+	echo "If an optional argument is provided (<strokes>), then stroke"
+	echo "confusion histograms will be constructed in addition to object"
+	echo "confusion histograms."
+	echo ""
+	echo "Output is written to the file CH_<dir1>.html or"
+	echo "CH_<fileList>.html, depending upon the arguments used."
+	exit 0
+fi
+
+if [ -d $1 ]
+then
+	# Two directories passed (hopefully).
+	# NOTE: Assumes same number of .lg files.
+	ls $1/*.lg > _f1
+	ls $2/*.lg > _f2
+	paste -d" " _f1 _f2 > d_$1
+	rm -f _f1 _f2 
+	
+	INFILE=d_$1
+	shift
+	python $LgEvalDir/src/confHists.py $INFILE $@
+	rm d_$1
+else
+	# User-provided file list.
+	python $LgEvalDir/src/confHists.py $@
+fi
+
+exit 0

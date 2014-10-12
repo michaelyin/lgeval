@@ -1,8 +1,8 @@
 ################################################################
-# lg.py - Bipartitite Graph Class
+# lg.py - Label Graph Class
 #
-# Author: R. Zanibbi, June 2012
-# Copyright (c) 2012, Richard Zanibbi and Harold Mouchere
+# Authors: R. Zanibbi and H. Mouchere, 2012
+# Copyright (c) 2012-2014 Richard Zanibbi and Harold Mouchere
 ################################################################
 import csv
 import sys
@@ -10,6 +10,7 @@ import math
 import copy
 import smallGraph
 import compareTools
+import os
 
 class Lg(object):
 	"""Class for bipartite graphs where the two node sets are identical, and
@@ -61,6 +62,7 @@ class Lg(object):
 				for label in nodeLabels[nid].keys():
 					if not isinstance(nid, str):
 						label = str(label)
+				
 					# Weights need to be floats.
 					if not isinstance( nodeLabels[nid][label], float ):
 						self.error = True
@@ -110,7 +112,7 @@ class Lg(object):
 				entryType = row[0].strip()
 				if entryType == 'N':
 					if len(row) < MIN_NODE_ENTRY_LENGTH:
-						sys.stderr.write(' !! Invalid node entry length: ' \
+						sys.stderr.write(' !! Invalid node entry length: ' +str(len(row))+\
 								'\n\t' + str(row) + '\n')
 						self.error = True
 					else:
@@ -118,12 +120,12 @@ class Lg(object):
 						if nid in self.nlabels.keys():
 							nlabelDict = self.nlabels[ nid ]
 							nlabel = row[2].strip()
-							if nlabel in nlabelDict:
-								# Note possible error.
-								sys.stderr.write(' !! Repeated node label entry ('\
-										+ self.file + '): ' \
-										+ '\n\t' + str(row) + '\n')
-								self.error = True
+							# if nlabel in nlabelDict:
+								# # Note possible error.
+								# sys.stderr.write(' !! Repeated node label entry ('\
+										# + self.file + '): ' \
+										# + '\n\t' + str(row) + '\n')
+								# self.error = True
 							# Add (or replace) entry for the label.
 							nlabelDict[ nlabel ] = float(row[3])
 						else:
@@ -140,7 +142,7 @@ class Lg(object):
 	
 				elif entryType == 'E':
 					if len(row) < MIN_EDGE_ENTRY_LENGTH:
-						sys.stderr.write(' !! Invalid edge entry length: ' \
+						sys.stderr.write(' !! Invalid edge entry length: ' +str(len(row))+\
 								'\n\t' + str(row) + '\n')
 						self.error = True
 					else:
@@ -154,11 +156,11 @@ class Lg(object):
 							if nid in self.nlabels.keys():
 								nlabelDict = self.nlabels[ nid ]
 								nlabel = row[3].strip()
-								if nlabel in nlabelDict:
-									# Note possible error.
-									sys.stderr.write(' !! Repeated node label entry ('\
-										+ self.file + '): ' \
-										+ '\n\t' + str(row) + '\n')
+								# if nlabel in nlabelDict:
+									# # Note possible error.
+									# sys.stderr.write(' !! Repeated node label entry ('\
+										# + self.file + '): ' \
+										# + '\n\t' + str(row) + '\n')
 							# Add (or replace) entry for the label.
 							nlabelDict[ nlabel ] = float(row[4])
 
@@ -166,11 +168,11 @@ class Lg(object):
 						elif primPair in self.elabels.keys():
 							elabelDict = self.elabels[ primPair ]
 							elabel = row[3].strip()
-							if elabel in elabelDict:
-								# Note possible error.
-								sys.stderr.write(' !! Repeated edge label entry (' \
-										+ self.file + '):\n\t' + str(row) + '\n')
-								self.error = True
+							# if elabel in elabelDict:
+								# # Note possible error.
+								# sys.stderr.write(' !! Repeated edge label entry (' \
+										# + self.file + '):\n\t' + str(row) + '\n')
+								# self.error = True
 							if elabel == '*':# if it uses the old fashion segmentation label, convert it by finding the (only) node label
 								if primPair[0] in self.nlabels and primPair[1] in self.nlabels and \
 								self.nlabels[ primPair[0]] == self.nlabels[ primPair[1]]:
@@ -180,7 +182,7 @@ class Lg(object):
 										+ self.file + '):\n\t' + str(row) + '\n')
 									self.error = True
 			
-			# Add (or replace) entry for the label.
+							# Add (or replace) entry for the label.
 							# Feb. 2013 - allow no weight.
 							if len(row) > MIN_EDGE_ENTRY_LENGTH:
 								elabelDict[ elabel ] = float(row[4])
@@ -202,7 +204,7 @@ class Lg(object):
 							self.elabels[ primPair ] = { elabel : float(row[4]) }
 				elif entryType == 'O':
 					if len(row) < MIN_OBJECT_ENTRY_LENGTH:
-						sys.stderr.write(' !! Invalid object entry length: ' \
+						sys.stderr.write(' !! Invalid object entry length: '+str(len(row))+\
 								'\n\t' + str(row) + '\n')
 						self.error = True
 					else:
@@ -217,12 +219,7 @@ class Lg(object):
 							nodeList.append(nid)
 							if nid in self.nlabels.keys():
 								nlabelDict = self.nlabels[ nid ]
-								if nlabel in nlabelDict:
-									# Note possible error.
-									sys.stderr.write(' !! Repeated node label entry '+str(nid)+'('\
-											+ self.file + '): ' \
-											+ '\n\t' + str(row) + '\n')
-									self.error = True
+								
 								# Add (or replace) entry for the label.
 								nlabelDict[ nlabel ] = nValue
 							else:
@@ -242,22 +239,17 @@ class Lg(object):
 									elabel = nlabel#'*' #segmentation
 									if primPair in self.elabels.keys():
 										elabelDict = self.elabels[ primPair ]
-										if elabel in elabelDict:
-											# Note possible error.
-											sys.stderr.write(' !! Repeated edge label entry (' \
-													+ self.file + '):\n\t' + str(row) + '\n')
-											self.error = True
-										else:
-											# Add (or replace) entry for the label.
-											elabelDict[ elabel ] = nValue
+										
+										# Add (or replace) entry for the label.
+										elabelDict[ elabel ] = nValue
 									else:
 										# Add new edge label entry for the new edge label
 										# as a dictionary.
 										self.elabels[ primPair ] = { elabel : nValue }
 
-				elif entryType == 'EO':
+				elif entryType == 'R' or entryType == 'EO':
 					if len(row) < MIN_OBJECT_EDGE_ENTRY_LENGTH:
-						sys.stderr.write(' !! Invalid object entry length: ' \
+						sys.stderr.write(' !! Invalid object entry length: ' +str(len(row))+\
 								'\n\t' + str(row) + '\n')
 						self.error = True
 					else:
@@ -265,15 +257,19 @@ class Lg(object):
 						oid2 = row[2].strip()
 						elabel = row[3].strip()
 						eValue = float(row[4].strip())
+						validRelationship = True
+
 						if not oid1 in objectDict:
-							sys.stderr.write(' !! Invalid object id: ' + oid1+\
-								'\n\t' + str(row) + '\n')
+							sys.stderr.write(' !! Invalid object id: "' + oid1+\
+									'" - IGNORING relationship:\n\t' + str(row) + '\n')
 							self.error = True
+							validRelationship = False
 						if not oid2 in objectDict:
-							sys.stderr.write(' !! Invalid object id: ' + oid2+\
-								'\n\t' + str(row) + '\n')
+							sys.stderr.write(' !! Invalid object id: "' + oid2+\
+									'" - IGNORING relationship:\n\t' + str(row) + '\n')
 							self.error = True
-						if not self.error:
+							validRelationship = False
+						if validRelationship:
 							nodeList1 = objectDict[oid1] # get all other item as node id
 							nodeList2 = objectDict[oid2] # get all other item as node id
 
@@ -283,14 +279,9 @@ class Lg(object):
 										primPair = ( nid1, nid2 )
 										if primPair in self.elabels.keys():
 											elabelDict = self.elabels[ primPair ]
-											if elabel in elabelDict:
-												# Note possible error.
-												sys.stderr.write(' !! Repeated edge label entry (' \
-														+ self.file + '):\n\t' + str(row) + '\n')
-												self.error = True
-											else:
-												# Add (or replace) entry for the label.
-												elabelDict[ elabel ] = eValue
+											
+											# Add (or replace) entry for the label.
+											elabelDict[ elabel ] = eValue
 										else:
 											# Add new edge label entry for the new edge label
 											# as dictionary.
@@ -299,12 +290,13 @@ class Lg(object):
 										sys.stderr.write('  !! Invalid self-edge (' +
 										self.file + '):\n\t' + str(row) + '\n')
 										self.error = True
+
 				# DEBUG: complaints about empty lines here...
 				elif len(entryType.strip()) > 0 and entryType.strip()[0] == '#':
 					# Ignore lines with comments.
 					pass
 				else:
-					sys.stderr.write('  !! Invalid graph entry type (expect N/E/O/EO): ' \
+					sys.stderr.write('  !! Invalid graph entry type (expected N, E, O, R or EO): ' \
 							+ str(row) + '\n')
 					self.error = True
 	
@@ -345,9 +337,54 @@ class Lg(object):
 				+ ' (labels: ' + str(elabelcount) \
 				+ ')   Error: ' + str(self.error)
 
+
+	def csvObject(self):
+		"""Construct CSV data file using object-relationship format. Currently 
+		weight values are only placeholders (i.e. 1.0 is always used)."""
+		outputString = ""
+
+		(segmentPrimitiveMap, primitiveSegmentMap, rootSegments, \
+				segmentEdges) = self.segmentGraph()
+
+		# Write the file name.
+		outputString += "# " + os.path.split(self.file)[1]
+		outputString += "\n\n"
+
+		# Write number of objects and format information.
+		# Output object information.
+		outputString += "# " + str(len(segmentPrimitiveMap.keys())) + " Objects"
+		outputString += "\n"
+		outputString += "# FORMAT: O, Object ID, Label, Weight, [ Primitive ID List ]"
+		outputString += "\n"
+
+		for objectId in sorted( segmentPrimitiveMap.keys() ):
+			for label in sorted(segmentPrimitiveMap[objectId][1]):
+				outputString += "O, " + objectId + ", " + label + ", 1.0"
+				for primitiveId in sorted( segmentPrimitiveMap[ objectId ][ 0 ] ):
+					outputString += ", " + primitiveId 
+				outputString += "\n"
+
+		# Write number of relationships and format information.
+		# Write relationship information.
+		outputString += "\n"
+		outputString += "# " + str( len(segmentEdges.keys()) ) + " Relationships (Pairs of Objects)"
+		outputString += "\n"
+		outputString += "# FORMAT: R, Object ID (parent), Object ID (child), Label, Weight" 
+		outputString += "\n"
+
+		for (parentObj, childObj) in sorted( segmentEdges.keys() ):
+			for relationship in sorted( segmentEdges[ (parentObj, childObj) ].keys() ):
+				outputString += "R, " + parentObj + ", " + childObj + ", " 
+				outputString += relationship + ", 1.0"
+				outputString += "\n"
+
+		return outputString
+
+
 	def csv(self):
 		"""Construct CSV data file representation as a string."""
 		# NOTE: currently the graph value is not being stored...
+		sstring = ''
 		nlist = []
 		elist = []
 		for nkey in self.nlabels.keys():
@@ -368,10 +405,15 @@ class Lg(object):
 		# NOTE: this means that '10' precedes '2' in the sorted ordering
 		nlist.sort()
 		elist.sort() 
-		sstring = ''
+		sstring += '# ' + os.path.split(self.file)[1] + '\n\n' 
+		sstring += '# ' + str(len(nlist)) + ' Nodes\n'
+		sstring += "# FORMAT: N, Primitive ID, Label, Weight\n"
 		for nstring in nlist:
 			sstring = sstring + nstring
 		sstring += "\n"
+
+		sstring += '# ' + str(len(elist)) + ' Edges\n'
+		sstring += '# FORMAT: E, Primitive ID (parent), Primitive ID (child), Label, Weight\n'
 		for estring in elist:
 			sstring = sstring + estring
 		
@@ -396,52 +438,60 @@ class Lg(object):
 		for node,labs in self.nlabels.items():
 			primSets[node] = {}
 			for l in labs:
-				primSets[node][l] = set([node])
+				(cost,_)=self.cmpNodes([l],[])
+				if(cost > 0):
+					primSets[node][l] = set([node])
+			#if len(primSets[node]) == 0:
+			#	primSets[node]['_'] = set([node]) #at least one empty label
 		for (n1, n2) in self.elabels.keys():
 			commonLabels = set(self.nlabels[n1].keys()).intersection(self.nlabels[n2].keys(),self.elabels[(n1,n2)].keys())
 			for l in commonLabels:
-				primSets[n1][l].add(n2)
-				primSets[n2][l].add(n1)
-		# NOTE: Segments can have multiple label
-		# warning: a primitive can belong to several different
-		# segments with different sets of primitives and different label.
-		# but there is only one segment with the same label attached to each primitive
-		# (not possible to represent several segmentation hypothesis of the same symbol)
+				#check if this label is interesting or not => compare to 'nothing', if there is not error, it means it is not interesting
+				(cost,_)=self.cmpNodes([l],[])
+				if(cost > 0):
+					primSets[n1][l].add(n2)
+					primSets[n2][l].add(n1)
+
+		# NOTE: Segments can have multiple labels
+		# A primitive can belong to several different
+		# segments with different sets of primitives with different labels.
+		# but there is only one segment with the same label attached to each primitive.
 		i = 0
 		segmentList = []
 		rootSegments = set([])
-		#for each label associated with each prim, there is a potential seg
+		
+		# For each label associated with each primitive, there is a possible object/segment
 		for primitive,segments in primSets.items():
+			if not primitive in primitiveSegmentMap:
+				primitiveSegmentMap[ primitive ] = {}
 			for lab in segments.keys():
 				alreadySegmented = False
 				for j in range(len(segmentList)):
 					if segments[lab] == segmentList[j]["prim"]:
 						if not primitive in primitiveSegmentMap:
 							primitiveSegmentMap[ primitive ] = {}
-						primitiveSegmentMap[ primitive ][lab] = 'seg' + str(j)
+						primitiveSegmentMap[ primitive ][lab] = 'Obj' + str(j)
 						alreadySegmented = True
 						if lab not in segmentList[j]["label"]:
-							segmentPrimitiveMap[  'seg' + str(j) ][1].append(lab)
+							segmentPrimitiveMap[  'Obj' + str(j) ][1].append(lab)
 							segmentList[j]["label"].add(lab)
 						break
 
 				if not alreadySegmented:
 					# Add the new segment.
-					newSegment = 'seg' + str(i)
+					newSegment = 'Obj' + str(i)
 					segmentList = segmentList + [ {"label":{lab},"prim":primSets[primitive][lab]} ]
 					segmentPrimitiveMap[ newSegment ] = (segments[lab],[lab])
-					if not primitive in primitiveSegmentMap:
-							primitiveSegmentMap[ primitive ] = {}
 					primitiveSegmentMap[ primitive ][lab] = newSegment
 					rootSegments.add(newSegment)
 					i += 1
 
 		# Identify 'root' objects/segments (i.e. with no incoming edges),
 		# and edges between objects. **We skip segmentation edges.
-		
-		for (n1, n2),elabs in self.elabels.items():
+		for (n1, n2), elabs in self.elabels.items():
 			segment1 = primitiveSegmentMap[n1]
 			segment2 = primitiveSegmentMap[n2]
+			
 			#for all possible pair of segments with these two primitives, look for the effective relation labels
 			possibleRelationLabels = set(elabs.keys()).difference(self.nlabels[n1].keys(),self.nlabels[n2].keys())
 			if len(possibleRelationLabels) != 0:
@@ -469,19 +519,22 @@ class Lg(object):
 									rootSegments.remove(pset2)
 								#print (str((n1, n2))+ " => " + str(( pset1,  pset2)) + "  = " + str(theRelationLab))
 								for label in theRelationLab:
-									if ( pset1,  pset2) in segmentEdges:
-										if label in segmentEdges[ ( pset1,  pset2) ]:
-											# Sum weights for repeated labels
-											segmentEdges[ ( pset1,  pset2)][label] += \
-													self.elabels[(n1,n2)][label]
+									#check if this label is interesting or not => compare to 'nothing', if there is not error, it means it is not interesting
+									(cost,_)=self.cmpNodes([label],[])
+									if(cost > 0):
+										if ( pset1,  pset2) in segmentEdges:
+											if label in segmentEdges[ ( pset1,  pset2) ]:
+												# Sum weights for repeated labels
+												segmentEdges[ ( pset1,  pset2)][label] += \
+														self.elabels[(n1,n2)][label]
+											else:
+												# Add unaltered weights for new edge labels
+												segmentEdges[ ( pset1,  pset2) ][label] = \
+														self.elabels[(n1,n2)][label]
 										else:
-											# Add unaltered weights for new edge labels
-											segmentEdges[ ( pset1,  pset2) ][label] = \
+											segmentEdges[ ( pset1, pset2) ] = {}
+											segmentEdges[ ( pset1, pset2) ][label] = \
 													self.elabels[(n1,n2)][label]
-									else:
-										segmentEdges[ ( pset1, pset2) ] = {}
-										segmentEdges[ ( pset1, pset2) ][label] = \
-												self.elabels[(n1,n2)][label]
 
 		self.restoreUnlabeledEdges()
 
@@ -499,175 +552,205 @@ class Lg(object):
 		pairs on nodes and all incoming and outgoing edges."""
 		(sp1, ps1, _, sre1) = self.segmentGraph()
 		(sp2, ps2, _, sre2) = lg2.segmentGraph()
-		#byValue = lambda pair: pair[1]  # define key for sort comparisons.
 
 		allNodes = set(ps1.keys())
-		#FIX : this this not the case in spare representation 
 		assert allNodes == set(ps2.keys())
 	
 		edgeDiffCount = 0
+		edgeDiffClassCount = 0
 		segDiffs = {}
 		correctSegments = set([])
 		correctSegmentsAndClass = set([])
-		# list and count the edges errors which are due to segmentation errors
-		# use cmpNodes to compare the labels of symbols
-		# idea : build the sub graph with the current primitive as center and only 
+		undirDiffClassSet = set([])
+
+		# List and count errors due to segmentation.
+		# Use cmpNodes to compare the labels of symbols.
+		# Idea : build the sub graph with the current primitive as center and only 
+		#print("IN---")
 		for primitive in ps1.keys():
-			# Make sure to skip primitives that were missing ('ABSENT'),
-			# as in that case the graphs disagree on all non-identical node
-			# pairs for this primitive, and captured in self.absentEdges.
-			# if not 'ABSENT' in self.nlabels[primitive] and \
-					# not 'ABSENT' in lg2.nlabels[primitive]:
-				#the 2 sub graphs
-				edgeFromP1 = {}
-				edgeFromP2 = {}
-				for (lab1,seg1) in ps1[primitive].items():
-					for p in sp1[seg1][0]:
-						if p != primitive:
-							if p in edgeFromP1:
-								edgeFromP1[p].append(lab1)
-							else:
-								edgeFromP1[p] = [lab1]
+			edgeFromP1 = {}
+			edgeFromP2 = {}
+			for (lab1,seg1) in ps1[primitive].items():
+				for p in sp1[seg1][0]:
+					# DEBUG (RZ): this is producing a primitive edge-level count:
+					# do not count segment edges that are undefined (e.g. in one direction,
+					# but not the other)
+					if p != primitive and (p,primitive) in self.elabels.keys() and \
+							lab1 in self.elabels[ (p,primitive) ].keys():
+						if p in edgeFromP1:
+							edgeFromP1[p].append(lab1)
+						else:  
+							edgeFromP1[p] = [lab1]
 	
-				for (lab2,seg2) in ps2[primitive].items():
-					for p in sp2[seg2][0]:
-						if p != primitive:
-							if p in edgeFromP2:
-								edgeFromP2[p].append(lab2)
-							else:
-								edgeFromP2[p] = [lab2]
+			for (lab2,seg2) in ps2[primitive].items():
+				for p in sp2[seg2][0]:
+					# DEBUG (RZ) - see DEBUG comment above.
+					if p != primitive and (p,primitive) in lg2.elabels.keys() and \
+							lab2 in lg2.elabels[ (p, primitive) ].keys():
+						if p in edgeFromP2:
+							edgeFromP2[p].append(lab2)
+						else:
+							edgeFromP2[p] = [lab2]
 
-				# Compute differences in edges labels with cmpNodes (as they are symbol labels)
-				diff1 = set([])
-				diff2 = set([])
-				# first add differences for shared primitives
-				commonPrim = set(edgeFromP1.keys()).intersection(edgeFromP2.keys())
-				for p in commonPrim:
-					(cost,diff) = self.cmpNodes(edgeFromP1[p], edgeFromP2[p])
-					edgeDiffCount = edgeDiffCount + cost
-					if cost > 0: #by someway, they disagree, thus add in both sets
-						diff1.add(p)
-						diff2.add(p)
-				#then add differences for primitives which are not is the other set
-				for p in (set(edgeFromP1.keys()) - commonPrim):
-					(cost,diff) = self.cmpNodes(edgeFromP1[p], [])
-					edgeDiffCount = edgeDiffCount + cost
+			# Compute differences in edges labels with cmpNodes (as they are symbol labels)
+			diff1 = set([])
+			diff2 = set([])
+			
+			# first add differences for shared primitives
+			commonPrim = set(edgeFromP1.keys()).intersection(edgeFromP2.keys())
+			for p in commonPrim:
+				(cost,diff) = self.cmpNodes(edgeFromP1[p], edgeFromP2[p])
+				edgeDiffCount = edgeDiffCount + cost
+				if cost > 0: # somehow they disagree, thus add in both sets
 					diff1.add(p)
-					
-				for p in (set(edgeFromP2.keys()) - commonPrim):
-					(cost,diff) = self.cmpNodes(edgeFromP2[p], [])
-					edgeDiffCount = edgeDiffCount + cost
 					diff2.add(p)
+
+				# RZ: Record edges that are specifically valid merges with disagreeing labels.
+				#     Also record sets of undirected edges that disagree.
+				for (l1,l2) in diff:
+					if l1 in self.nlabels[p].keys() and l2 in lg2.nlabels[p].keys():
+						edgeDiffClassCount += 1
+					if not (p, primitive) in undirDiffClassSet and not (primitive, p) in undirDiffClassSet:
+						undirDiffClassSet.add( (primitive, p) )
+
+			#then add differences for primitives which are not in the other set
+			for p in (set(edgeFromP1.keys()) - commonPrim):
+				(cost,diff) = self.cmpNodes(edgeFromP1[p], [])
+				edgeDiffCount = edgeDiffCount + cost
+				diff1.add(p)
+					
+			for p in (set(edgeFromP2.keys()) - commonPrim):
+				(cost,diff) = self.cmpNodes(edgeFromP2[p], [])
+				edgeDiffCount = edgeDiffCount + cost
+				diff2.add(p)
 					
 
-				# Only create an entry where there are disagreements.
-				if len(diff1)+len(diff2) > 0:
-					segDiffs[primitive] = ( diff1, diff2 )
+			# Only create an entry where there are disagreements.
+			if len(diff1) + len(diff2) > 0:
+				segDiffs[primitive] = ( diff1, diff2 )
 				
-				# look for correct segments, ie primitive sets which are the same in both graphs
-				#NOTE: even if this algorithm is not symmetric, the result is symmetric
-				# print ("ps1="+str(ps1))
-				# print ("ps2="+str(ps2))
-				for (lab1,seg1) in ps1[primitive].items():
-					#print ("pour "+ str((lab1,seg1)))
-					if(seg1, lab1) not in correctSegmentsAndClass: # already found, no need to search
-						for (lab2,seg2) in ps2[primitive].items():
-							# print ("  > pour "+ str((lab2,seg2)))
-							# print ("  >   " + str(sp1[seg1][0]) + "vs"+str(sp2[seg2][0]))
-							if sp1[seg1][0] == sp2[seg2][0]:
-								# print ("OK"+str((seg1, lab1)))
-								correctSegments.add(seg1)
-								(cost,_) = self.cmpNodes([lab1],[lab2]) # do not use spX[segX][1] because we can want to count each correct label as 1 even if there is an error in some labels in the same set
-								if (cost == 0):
-									correctSegmentsAndClass.add((seg1, lab1))
+			# Look for correct segments, ie primitive sets which are the same in both graphs
+			# NOTE: even if this algorithm is not symmetric, the result is symmetric
+			for (lab1,seg1) in ps1[primitive].items():
+				if(seg1, lab1) not in correctSegmentsAndClass: # already found, no need to search
+					for (lab2,seg2) in ps2[primitive].items():
+						if sp1[seg1][0] == sp2[seg2][0] and not lab1 == 'ABSENT' and not lab2 == 'ABSENT':
+							correctSegments.add(seg1)
+							(cost,_) = self.cmpNodes([lab1],[lab2]) 
+							if (cost == 0):
+								correctSegmentsAndClass.add((seg1, lab1))
 
-			# DEBUG: don't record differences for a single node.
-			# elif 'ABSENT' in self.nlabels[primitive] \
-					# and len(self.nlabels.keys()) > 1:
-				# If node was missing in this graph, treat this graph as having
-				# the opposite segmentation relationship of that in the other 
-				# graph - in other words, total error, with all pairs incorrect.
-				# DEBUG: We are trying to define the opposite of the edges
-				# in the other graph in the case of an absent node.
-				# allOtherNodes = allNodes.difference(set([primitive]))
-				# ographSegPrimSet = set((sp2[ ps2[primitive] ])[0]).difference(set([primitive]))
-				# ediff = allOtherNodes.difference(ographSegPrimSet)
-				# edgeDiffCount = edgeDiffCount + len(ediff) + \
-						# len(ographSegPrimSet)
-				# segDiffs[primitive] = ( ediff, ographSegPrimSet )
-				
-				#version CROHME
-				# ographSegPrimSet = set((sp2[ ps2[primitive] ])[0]).difference(set([primitive]))
-				# ediff = set([primitive])
-				# edgeDiffCount = edgeDiffCount + len(ographSegPrimSet)
-				# segDiffs[primitive] = ( ediff, ographSegPrimSet )
-
-			# DEBUG: don't record differences for a single node.
-			# elif len(self.nlabels.keys()) > 1:
-				# Similar, for case where node is missing in lg2.
-				# allOtherNodes = allNodes.difference(set([primitive]))
-				# graphSegPrimSet = set((sp1[ ps1[primitive] ])[0]).difference(set([primitive]))
-				# ediff = allOtherNodes.difference(graphSegPrimSet)
-				# segDiffs[primitive] = ( graphSegPrimSet, ediff )
-				# edgeDiffCount = edgeDiffCount + len(ediff) + \
-						# len(graphSegPrimSet)
-
-				# version CROHME
-				# graphSegPrimSet = set((sp1[ ps1[primitive] ])[0]).difference(set([primitive]))
-				# ediff = set([primitive])
-				# segDiffs[primitive] = ( graphSegPrimSet, ediff )
-				# edgeDiffCount = edgeDiffCount + len(graphSegPrimSet)
-
-		# Compute metrics 
-		#print (str(sp2))
-
-		metrics = [ ("SegError", len(sp2.keys()) - len(correctSegments) ) ]
-		metrics = metrics + [ ("CorrectSegments", len(correctSegments) ) ]
-		metrics = metrics + [ ("CorrectSegmentsAndClass", len(correctSegmentsAndClass)) ]
+		# Compute total number of object classifications (recognition targets)
 		nbSegmClass = 0
 		for (_,labs) in sp2.items():
 			nbSegmClass += len(labs[1])
-		metrics = metrics + [ ("ClassError", nbSegmClass - len(correctSegmentsAndClass)) ] 
-		metrics = metrics + [ ("nSeg", len(sp2.keys()) - len(lg2.absentNodes)) ] 
-		metrics = metrics + [ ("detectedSeg", len(sp1.keys())) ]
 
-		# Metrics for edges over segments (number and detected...)
-		#metrics = metrics + [ ("nSegRelEdges", len(sre2.keys()) - len(lg2.absentEdges)) ]
-		metrics = metrics + [ ("dSegRelEdges", len(sre1.keys())) ]
-
-		# Compute the specific 'segment-level' graph edges that disagree, at the
-		# level of primitive-pairs. This means that invalid segmentations may
-		# still have valid layouts in some cases.
+		# Compute the specific 'object-level' graph edges that disagree, at the
+		# level of primitive-pairs. 
 		primRelErrors = 0
 		segRelErrors = 0
+		correctSegRels = 0
+		correctSegRelLocations = 0
 		primRelEdgeDiffs = {}
-		#segRelMatched = set([])
 		
 		for thisPair in sre1.keys():
+			error = False
+			misLabeled = False
+			falsePositive = False
+
 			thisParentIds = set(sp1[ thisPair[0] ][0])
 			thisChildIds = set(sp1[thisPair[1] ][0])
 
+			# Check whether the objects are correctly segmented (avoid counting
+			# over-segmented objects as having valid relationships)
+			if not ( thisPair[0] in correctSegments and  thisPair[1] in correctSegments):
+				error = True
+				falsePositive = True  # DEBUG - segments must be valid for a false positive.
+
 			# A 'correct' edge has the same label between all primitives
 			# in the two segments.
-			error = False
 			for parentId in thisParentIds:
 				for childId in thisChildIds:
-					# DEBUG: compare only label sets, not values.
-					if not (parentId, childId) in lg2.elabels.keys() or \
-						    not ((0,[]) == self.cmpEdges(self.elabels[ (parentId, childId) ].keys(),lg2.elabels[ (parentId, childId) ].keys())):
-#					   not set(self.elabels[ (parentId, childId) ].keys())  == \
-#							set(lg2.elabels[ (parentId, childId) ].keys()):
+					# Distinguish relationship edge locations (structure) from label-only errors.
+					# DEBUG: compare only label sets, not confidence values.
+					if not (parentId, childId) in lg2.elabels.keys():
+						falsePositive = True
+					else:
+						(cost, diffLabelPairList) = self.cmpEdges(self.elabels[ (parentId, childId) ].keys(), \
+								lg2.elabels[ (parentId, childId) ].keys())
+						if not (0,[]) == (cost, diffLabelPairList):
+							misLabeled = True
+
+					# TO DO!! This assumes single labels on primitives.
+					if falsePositive or misLabeled:
 						error = True
 						primRelErrors += 1
 						primRelEdgeDiffs[ thisPair ] = [ ('Error',1.0) ]
 						continue
-
+		
 			# RZ DEBUG: count primitive edge errors separately from segment (i.e whole objects/symbols)
 			if error:
 				segRelErrors += 1
+			else:
+				correctSegRels += 1
+
+			# Count correct edge locations, even if mislabeled.
+			if not error or falsePositive == False:
+				correctSegRelLocations += 1
+
 			self.error |= error
-		metrics = metrics + [ ("SegRelErrors", segRelErrors) ]
-		metrics = metrics + [ ("PrimitiveRelErrors", primRelErrors) ]
+		
+		# Compute object counts *without* inserted absent nodes.
+		lg2.removeAbsent()
+		self.removeAbsent()
+
+		(sp2orig, ps2orig, _, sre2orig) = lg2.segmentGraph()
+		(sp1orig, ps1orig, _, sre1orig) = self.segmentGraph()
+		
+		nLg2Objs = len(sp2orig.keys()) 
+		nLg1Objs = len(sp1orig.keys()) 
+
+		# For input file, need to compare against all objects after including
+		# missing/additional absent nodes and edges.
+		nLg1ObjsAbsent = len(sp1.keys())
+
+		lg2.addAbsent(self)
+		self.addAbsent(lg2)
+		
+
+		# RZ (Oct. 2014) Adding indicator variables for different correctness scenarios.
+		hasCorrectSegments = 1 if len(correctSegments) == nLg2Objs and \
+				len(correctSegments) == nLg1ObjsAbsent else 0
+		hasCorrectSegmentsAndLabels = 1 if len(correctSegmentsAndClass) == nLg2Objs and \
+				len(correctSegmentsAndClass) == nLg1ObjsAbsent else 0
+		
+		hasCorrectRelationLocations = 1 if correctSegRelLocations == len(sre1.keys()) and \
+				correctSegRelLocations == len(sre2.keys()) else 0
+		hasCorrectRelationsAndLabels =  1 if correctSegRels == len(sre1.keys()) and \
+				correctSegRels == len(sre2.keys()) else 0
+		
+		hasCorrectStructure = hasCorrectRelationLocations and hasCorrectSegments
+		
+		# Compile vector of (name, value) metric pairs.
+		metrics = [
+			("edgeDiffClassCount", edgeDiffClassCount),
+			("undirDiffClassCount", len(undirDiffClassSet)),
+			
+			("nSeg", nLg2Objs),
+			("detectedSeg", nLg1Objs),
+			("dSegRelEdges", len(sre1.keys())),
+			("CorrectSegments", len(correctSegments)),
+		    ("CorrectSegmentsAndClass", len(correctSegmentsAndClass)),
+			("ClassError", nbSegmClass - len(correctSegmentsAndClass)), 
+			("CorrectSegRels",correctSegRels),
+			("CorrectSegRelLocations",correctSegRelLocations),
+			("SegRelErrors", segRelErrors),
+			
+			("hasCorrectSegments", hasCorrectSegments),
+			("hasCorrectSegLab", hasCorrectSegmentsAndLabels), 
+			("hasCorrectRelationLocations", hasCorrectRelationLocations),
+			("hasCorrectRelLab", hasCorrectRelationsAndLabels),
+			("hasCorrectStructure", hasCorrectStructure) ]
 
 		return (edgeDiffCount, segDiffs, correctSegments, metrics, primRelEdgeDiffs)
 
@@ -681,28 +764,20 @@ class Lg(object):
 		metrics  = []
 		nodeconflicts = []
 		edgeconflicts = []
-		#byValue = lambda pair: pair[1]  # define key for sort comparisons.
 
-		# FIX number of nodes as number in reference (lg2)
-		# For evaluation relative to ground truth, this is more appropriate
-		# than the (possibly expanded) number of targets after resolving
-		# absent nodes in both directions. Does lead to risk of negative
-		# accuracies (more errors than targets).
-		# FIXED ( HM ) use the union of all nodes label instead of only lg2 ones
-		#    it change the nlabelMismatch, nodeClassError and so D_C and all rates values
-		# numNodes = len(lg2.nlabels.keys())
+		# HM: use the union of all node labels instead of only lg2 ones
+		#     it changes the nlabelMismatch, nodeClassError and so D_C and all rates values
 		allNodes = set(lg2.nlabels.keys()).union(self.nlabels.keys())
 		numNodes = len(allNodes)
 		(sp2, ps2, _, sre2) = lg2.segmentGraph()
 		nSegRelEdges = len(sre2)
 
 		# Handle case of empty graphs, and missing primitives.
-		# SIDE EFFECT: 'ABSENT' nodes and edges added to each graph.
+		# SIDE EFFECT: 'ABSENT' nodes added to each graph.
 		self.matchAbsent(lg2)
 
 		# METRICS
 		# Node and edge labels are considered as sets.
-		#numNodes = len(self.nlabels.keys())
 		nlabelMismatch = 0
 		numEdges = numNodes * (numNodes - 1)  # No self-edges.
 		numLabels = numNodes + numEdges
@@ -727,7 +802,6 @@ class Lg(object):
 		# label (no edge).
 
 		# Identify the set of nodes with disagreeing edges.
-		# (RZ: Nov. 2012)
 		nodeEdgeError = set()
 		for (graph,oGraph) in [ (self,lg2), (lg2,self) ]:
 			for npair in graph.elabels.keys():
@@ -737,21 +811,20 @@ class Lg(object):
 					elabelMismatch = elabelMismatch + cost
 
 					(a,b) = npair
+					
 					# Record nodes in invalid edge
 					nodeEdgeError.update([a,b])
 
 					# DEBUG: Need to indicate correctly *which* graph has the
 					# missing edge; this graph (1st) or the other (listed 2nd).
-					conflictList = []
 					if graph == self:
 						for (l1,l2) in errL:
 							edgeconflicts.append((npair, [ (l1, 1.0) ], [(l2, 1.0)] ) )
+						
 					else:
 						for (l1,l2) in errL:
 							edgeconflicts.append((npair, [ (l2, 1.0) ], [(l1, 1.0)] ) )
-
-					edgeconflicts.extend(conflictList)
-					
+	
 		# Obtain number of primitives with an error of any sort.
 		nodeError = nodeClassError.union(nodeEdgeError)
 
@@ -762,13 +835,14 @@ class Lg(object):
 				if cost > 0:
 					elabelMismatch = elabelMismatch + cost
 					(a,b) = npair
+					
 					# Record nodes in invalid edge
 					nodeEdgeError.update([a,b])
 					for (l1,l2) in errL:
 						edgeconflicts.append((npair, [ (l1, 1.0) ], [(l2, 1.0)] ) )
 
 		# Now compute segmentation differences.
-		(segMismatch, segDiffs, correctSegs, scMetrics, segRelDiffs) \
+		(segMismatch, segDiffs, correctSegs, segmentMetrics, segRelDiffs) \
 				= self.compareSegments(lg2)
 
 		# UNDIRECTED/NODE PAIR METRICS
@@ -792,23 +866,11 @@ class Lg(object):
 
 		# Compute performance metrics; avoid divisions by 0.
 		cerror = ("D_C", nlabelMismatch) 
-		cnerror = ("D_C(%)",0.0)
-		if numNodes > 0:
-			cnerror = ("D_C(%)", float(nlabelMismatch) / numNodes)
-		rerror = ("D_L", elabelMismatch) 
-		rnerror = ("D_L(%)", 0.0)
-		snerror = ("D_S(%)", 0.0)
-		if numEdges > 0:
-			rnerror = ("D_L(%)", float(elabelMismatch) / numEdges)
-			snerror = ("D_S(%)", float(segMismatch) / numEdges)
+		lerror = ("D_L", elabelMismatch) 
 		serror = ("D_S", segMismatch) 
+		rerror = ("D_R", elabelMismatch - segMismatch)
 		aerror = ("D_B", nlabelMismatch + elabelMismatch) 
 
-		anerror = ("D_Bn(%)",0.0)
-		if numLabels > 0:
-			anerror = ("D_Bn(%)", float(nlabelMismatch + elabelMismatch)/numLabels)
-
-		
 		# DEBUG:
 		# Delta E BASE CASE: for a single node, which is absent in the other
 		# file, set label and segment edge mismatches to 1 (in order
@@ -828,19 +890,15 @@ class Lg(object):
 		errorVal = errorVal / 3.0
 		eerror  = ("D_E(%)", errorVal)
 	
-	#eerror = ("D_E(%)", \
-	#				(float(nlabelMismatch) /  numNodes +
-	#				 math.sqrt(float(segMismatch) / numEdges) +
-	#				 math.sqrt(float(elabelMismatch) / numEdges)) / 3.0)
-
 		# Compile metrics
-		metrics = metrics + [ cerror,  serror, rerror, anerror,\
-				eerror, cnerror, snerror, rnerror, aerror, \
+		metrics = metrics + [ aerror, cerror, lerror, rerror, serror,  \
+				eerror, \
 				("nNodes",numNodes), ("nEdges", numEdges), \
 				("nSegRelEdges", nSegRelEdges), \
 				("dPairs",incorrectPairs),("segPairErrors",segPairErrors),
-				("nodeCorrect", numNodes - len(nodeError))]
-		metrics = metrics + scMetrics
+				("nodeCorrect", numNodes - len(nodeError)) ]
+				
+		metrics = metrics + segmentMetrics
 
 		return (metrics, nodeconflicts, edgeconflicts, segDiffs, correctSegs,\
 				segRelDiffs)
@@ -883,9 +941,8 @@ class Lg(object):
 
 			# Skip leaf nodes.
 			if nextNode in nodeChildMap.keys():
-				# DEBUG: need to copy the list of children, to avoid
-				# missing child nodes as d.structures are updated.
 				children = copy.deepcopy(nodeChildMap[ nextNode ])
+				
 				for child in children:
 					numChildParents = len( nodeParentMap[ child ] )
 
@@ -935,17 +992,9 @@ class Lg(object):
 			self.error = True
 
 		# Add "absent" nodes.
+		# NOTE: all edges to/from "absent" nodes are unlabeled.
 		for missingNode in self.absentNodes:
 			self.nlabels[ missingNode ] = { 'ABSENT': 1.0 }
-
-		# Add edges for absent elements, to every node in 
-		# the now-expanded node set.
-		# for missingNode in self.absentNodes:
-			# for node in self.nlabels.keys():
-				# # Do not create self-edges.
-				# if not missingNode == node:
-					# self.elabels[ ( missingNode, node) ] = { 'ABSENT' : 1.0 }
-					# self.absentEdges.add( (missingNode, node) )
 
 	def matchAbsent(self, lg2):
 		"""Add all missing primitives and edges between this graph and
@@ -1000,7 +1049,7 @@ class Lg(object):
 		# DEBUG: make sure that all absent edges are treated as
 		# 'hard' decisions (i.e. label ('_',1.0))
 		self.matchAbsent(lg2)
-		self.labelMissingEdges()
+		#self.labelMissingEdges()
 
 		# Merge node and edgelabels.
 		mergeMaps(self.nlabels, self.gweight, lg2.nlabels, lg2.gweight, \
@@ -1073,60 +1122,52 @@ class Lg(object):
 					self.elabels[ edge ][ label ] = 1.0 - currentValue
 
 	def subStructIterator(self, nodeNumbers):
-		""" return an iterator which gives all substructures with n nodes
+		""" Return an iterator which gives all substructures with n nodes
 		n belonging to the list depths"""
 		if(isinstance(nodeNumbers, int)):
 			nodeNumbers = [nodeNumbers]
 		subStruct = []
-		#init the substruct with isolated nodes
+		
+		# Init the substruct with isolated nodes
 		for n in self.nlabels.keys():
 			subStruct.append(set([n]))
 			if 1 in nodeNumbers:
 				yield smallGraph.SmallGraph([(n, "".join(self.nlabels[n].keys()))], [])
-		#print(subStruct)
+		
 		for d in range(2,max(nodeNumbers)+1):
-					#add one node to each substructure
+			#add one node to each substructure
 			newSubsS = set([])
 			newSubsL = []
 			for sub in subStruct:
-				#print ("  with " + str(sub))
 				le = getEdgesToNeighbours(sub,self.elabels.keys())
 				for (f,to) in le:
-					#print ("    Add? " + str(to))
 					new = sub.union([to])
 					lnew = list(new)
 					lnew.sort()
 					snew = ",".join(lnew)
-					#print ("    Test:" + snew + " in " + str(newSubsS))
+					
 					if(not snew in newSubsS):
 						newSubsS.add(snew)
 						newSubsL.append(new)
 						if d in nodeNumbers:
-#							struc = getEdgesBetweenThem(new, self.elabels.keys())
-#							sg1 = smallGraph.SmallGraph()
-#							for n in new:
-#								sg1.nodes[n] = "".join(self.nlabels[n].keys())
-#							for (a,b) in struc:
-#								sg1.edges[(a,b)] = "".join(self.elabels[(a,b)].keys())
 							yield self.getSubSmallGraph(new)
-						#print ("   Added: " + str(new))
+			
+			# ??? BUG ???
 			subStruct = newSubsL
 			
 	def getSubSmallGraph(self, nodelist):
-		"""return the small graph with the primitives in nodelist and all edges 
+		"""Return the small graph with the primitives in nodelist and all edges 
 		between them. The used label is the merged list of labels from nodes/edges"""
 		sg = smallGraph.SmallGraph()
 		for n in nodelist:
-			#sg.nodes[n] = "".join(self.nlabels[n].keys())
 			sg.nodes[n] = self.nlabels[n].keys()
 		for e in getEdgesBetweenThem(nodelist,self.elabels.keys()):
-			#sg.edges[e] = "".join(self.elabels[e].keys())
 			sg.edges[e] = self.elabels[e].keys()
 		return sg
 		
-	#compare the substructure
+	# Compare the substructure
 	def compareSubStruct(self, olg, depths):
-		"""return the list of couple of substructure which disagree
+		"""Return the list of couple of substructure which disagree
 		the substructure from self are used as references"""
 		allerrors = []
 		for struc in olg.subStructIterator(depths):
@@ -1139,17 +1180,17 @@ class Lg(object):
 		"""Compute the number of differing segments, and record disagreements
 		in a list. 
 		The primitives in each subgraph should be of the same number and names
-		(identifiers). Nodes are merged that have identical (label,value)
-		pairs on nodes and all identical incoming and outgoing edges.
-		If used for classification evaluation, the ground-truth should be lgGT.
-		The first key value of the matrix is the lgGT obj structure, which
-		gives the structure of the corresponding primitives which is the key
-		to get the error structure in self"""
+		(identifiers). Nodes are merged that have identical (label,value) pairs
+		on nodes and all identical incoming and outgoing edges.  If used for
+		classification evaluation, the ground-truth should be lgGT.  The first
+		key value of the matrix is the lgGT obj structure, which gives the
+		structure of the corresponding primitives which is the key to get the
+		error structure in self.""" 
 		(sp1, ps1, _, sre1) = self.segmentGraph()
 		(spGT, psGT, _, sreGT) = lgGT.segmentGraph()
 
 		allNodes = set(psGT.keys())
-		#FIX : this this not the case in spare representation 
+		#FIX : check that primitives identical. This this not the case in spare representation 
 		assert allNodes == set(psGT.keys())
 	
 		segDiffs = set()
@@ -1158,27 +1199,33 @@ class Lg(object):
 			# Make sure to skip primitives that were missing ('ABSENT'),
 			# as in that case the graphs disagree on all non-identical node
 			# pairs for this primitive, and captured in self.absentEdges.
+
+			# RZ: Assuming one level of structure here; modifying for
+			#     new data structures accomodating multiple structural levels.
+			obj1Id = ps1[primitive][ ps1[primitive].keys()[0] ]
+			obj2Id = psGT[primitive][ psGT[primitive].keys()[0] ]
+
 			if not 'ABSENT' in self.nlabels[primitive] and \
 					not 'ABSENT' in lgGT.nlabels[primitive]:
 				# Obtain sets of primitives sharing a segment for the current
 				# primitive for both graphs.
 				# Each of sp1/spGT are a map of ( {prim_set}, label ) pairs.
-				segPrimSet1 = sp1[ ps1[primitive] ][0]
-				segPrimSet2 = spGT[ psGT[primitive] ][0]
+
+				segPrimSet1 = sp1[ obj1Id ][0]
+				segPrimSet2 = spGT[ obj2Id ][0]
 				
 				# Only create an entry where there are disagreements.
 				if segPrimSet1 != segPrimSet2:
-					segDiffs.add( ( psGT[primitive], ps1[primitive]) )
-					#print "add seg Diff because of set : "  + str(( psGT[primitive], ps1[primitive]))
+					segDiffs.add( ( obj2Id, obj1Id) )
 				else:
-					correctSegments.add(psGT[primitive])
+					correctSegments.add( obj2Id )
+			
 			# DEBUG: don't record differences for a single node.
 			elif len(self.nlabels.keys()) > 1:
 				# If node was missing in this graph or the other, treat 
-				# this graph as having a miss segment
+				# this graph as having a missing segment
 				# do not count the segment in graph with 1 primitive
-				segDiffs.add(( psGT[primitive], ps1[primitive]) )
-				#print "add ABSENT : " +  str(( psGT[primitive], ps1[primitive]))
+				segDiffs.add(( obj2Id, obj1Id ) )
 
 		# now check if the labels are identical
 		for seg in correctSegments:
@@ -1186,12 +1233,17 @@ class Lg(object):
 			# labels in a segment).
 			# DEBUG: use only the set of labels, not confidence values.
 			firstPrim = list(spGT[seg][0])[0]
-			if (0,[]) != self.cmpNodes(self.nlabels[ firstPrim ].keys(),lgGT.nlabels[ firstPrim ].keys()):
-				segDiffs.add(( psGT[firstPrim], ps1[firstPrim]) )
-				#print "add segDiff because of label : " +  str(( psGT[firstPrim], ps1[firstPrim])) + str((self.nlabels[ firstPrim ].keys(),lgGT.nlabels[ firstPrim ].keys()))
+			(cost, diff) = self.cmpNodes(self.nlabels[ firstPrim ].keys(),lgGT.nlabels[ firstPrim ].keys())
+
+			segId1 = ps1[firstPrim][ ps1[ firstPrim ].keys()[0] ]
+			segId2 = psGT[firstPrim][ psGT[ firstPrim ].keys()[0] ]
+			
+			if (0,[]) != (cost, diff):
+				segDiffs.add(( segId2, segId1) )
 		allSegWithErr = set([p for (p,_) in segDiffs])
+		
 		# start to build the LG at the object level
-		# add nodes for objet with the labels from the first prim
+		# add nodes for object with the labels from the first prim
 		lgObj = Lg()
 		for (sid,lprim) in spGT.iteritems():
 			lgObj.nlabels[sid] = lgGT.nlabels[list(lprim[0])[0]]
@@ -1206,6 +1258,7 @@ class Lg(object):
 			thisParentIds = set(spGT[ thisPair[0] ][0])
 			thisChildIds = set(spGT[thisPair[1] ][0])
 			lgObj.elabels[thisPair] = lgGT.elabels[ (list(thisParentIds)[0], list(thisChildIds)[0])]
+			
 			# A 'correct' edge has the same label between all primitives
 			# in the two segments.
 			# NOTE: we are not checking the consitency of label in each graph
@@ -1215,21 +1268,18 @@ class Lg(object):
 				for childId in thisChildIds:
 					# DEBUG: compare only label sets, not values.
 					if not (parentId, childId) in self.elabels.keys() or \
-					   (0,[]) != self.cmpEdges(self.elabels[ (parentId, childId) ].keys(),lgGT.elabels[ (parentId, childId) ].keys()):
-						#print "add edge err : " + str((parentId, childId))
+					   (0,[]) != self.cmpEdges(self.elabels[ (parentId, childId) ].keys(), lgGT.elabels[ (parentId, childId) ].keys()):
 						segEdgeErr.add(thisPair)
 						continue
-		#print "LG Obj : \n" + lgObj.csv()
+		
 		listOfAllError = []
 		for smg in lgObj.subStructIterator(depths):
 			#if one segment is in the segment error set
 			showIt = False
 			if len(set(smg.nodes.keys()).intersection(allSegWithErr)) > 0:
-				#print "show because of allSegWithErr : " + str(smg)
 				showIt = True
 			for pair in smg.edges.keys():
 				if pair in segEdgeErr:
-					#print "show because of segEdgeErr : " + str(smg)
 					showIt = True
 					continue
 			if showIt:
@@ -1237,9 +1287,8 @@ class Lg(object):
 				allPrim = []
 				for s in smg.nodes.keys():
 					allPrim.extend(spGT[s][0])
-				#print allPrim
+				
 				smgPrim1 = self.getSubSmallGraph(allPrim)
-				#build the smg for the prim from lgGT 
 				smgPrimGT = lgGT.getSubSmallGraph(allPrim)
 				listOfAllError.append((smg,smgPrimGT,smgPrim1))
 		
