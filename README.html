@@ -238,8 +238,8 @@ IRCCyN/IVC Lab, University of Nantes, France</p>
 
 <h2><a name="purpose"></a>Purpose</h2>
 
-<p>The Label Graph Evaluation tools (LgEval) were originally used for scoring handwritten math recognition systems for the <a href="http://www.cs.rit.edu/~rlaz/files/ICDAR_CROHME2013.pdf" title="CROHME 2013 ICDAR paper">CROHME 2013</a> and CROHME 2014 competitions. CROHME is short for <a href="http://www.isical.ac.in/~crohme/index.html" title="CROHME Competition Web Page">Competition on Recognition of Online Handwritten Mathematical Expressions</a> which has been run annually between 2011 and 2014.
-For CROHME, the library was used to obtain stroke and symbol-level evaluation of handwritten math expressions. However, label graphs are a very general formalism, and may be used to represent and evaluate structure for many other problems.</p>
+<p>The Label Graph Evaluation tools (LgEval) were originally used for scoring handwritten math recognition systems for the <a href="http://www.isical.ac.in/~crohme/index.html" title="CROHME Competition Web Page">Competition on Recognition of Online Handwritten Mathematical Expressions</a> which has been run annually between 2011 and 2014.
+For CROHME, the library was used to obtain stroke and symbol-level evaluation of handwritten math expressions. However, label graphs are a very general formalism, and may be used to represent and evaluate structure for other problems.</p>
 
 <p>A <em>label graph</em> is simply a labeled directed graph. Both nodes and edges are labeled, representing the grouping of input primitives into objects (e.g. grouping strokes into symbols), object types (e.g. symbol names) along with relationships between objects. The section <a href="#lgdescription">Label Graph Files</a> describes the representation in detail. The current version of the library may be used to represent and evaluate multiple levels of structure (e.g. for matrices, which contains symbols, cells, rows, and columns).</p>
 
@@ -511,7 +511,7 @@ being visualized.</p></li>
 </code></pre>
 
 <p><strong>confHist</strong><br/>
-Create structure confusion histograms, which show target structures (e.g. of 2-3 symbols) or stroke groups, along with corresponding error graphs and their frequencies. For space, only subgraph errors that are produced more than three times are included in the output. This provides a detailed summary of the specific segmentation and classification errors made by a recognition algorithm. The structure confusion histograms at the object and stroke levels are stored in a (large) .html file.</p>
+Create structure confusion histograms, which show target structures (e.g. of 2-3 symbols) or stroke groups, along with corresponding error graphs and their frequencies. To save space, the user can specific the minimum number of times that an error must occur to be included in the output. This provides a detailed summary of the specific segmentation and classification errors made by a recognition algorithm. The structure confusion histograms at the object and stroke levels are stored in a (large) .html file.</p>
 
 <p><strong>cdiff, ldiff and vdiff</strong><br/>
 Used to compile labeling errors of given types (<em>cdiff</em>), or return the a list of the files containing these errors (<em>ldiff</em>) and view them (<em>vdiff</em>) using 'less.' Regular expression matching over node and edge labels is supported ('egrep' format), and files with or without segmentation errors may be selected for.</p>
@@ -532,8 +532,7 @@ Used to compile labeling errors of given types (<em>cdiff</em>), or return the a
 
 <p><strong>relabelEdges and relabelOldCROHME</strong><br/>
 Tools to replace edge labels in 'old' label graph files using '*' to indicate
-merged primitives, but used the same label for symbols and relationships (e.g. using
-'R' for both the symbol R and 'Right-of')</p>
+merged primitives.</p>
 
 <h2><a name="other"></a>Additional Programs</h2>
 
