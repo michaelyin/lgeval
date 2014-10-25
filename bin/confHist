@@ -1,12 +1,12 @@
 #!/bin/bash
 
-if [ $# -lt 1 ]
+if [ $# -lt 2 ]
 then
 	echo "LgEval confHist: Structure Confusion Histogram Generator"
 	echo "Copyright (c) R. Zanibbi, H. Mouchere, 2013-2014"
 	echo ""
-	echo "Usage: confHist dir1 dir2 [minCount] [strokes] OR"
-	echo "       confHist fileList [minCount] [strokes]"
+	echo "Usage: confHist dir1 dir2 graphSize [minCount] [strokes] OR"
+	echo "       confHist fileList graphSize [minCount] [strokes]"
 	echo ""
 	echo "Creates an .html file containing structure confusion histograms"
 	echo "at the object level. The histograms visualize errors by their"
@@ -15,6 +15,7 @@ then
 	echo "If a file list is provided, then each line of the file"
 	echo "(where each line is: 'inputfile outputfile') is used for comparisons."
 	echo ""
+	echo "graphSize is the number of objects/primitives in targets to analyze."
 	echo "minCount is the minimum number of times an error should occur before"
 	echo "detailed information is provided in the confusion histogram. By default,"
 	echo "all errors are shown (minCount = 1)."
@@ -23,24 +24,28 @@ then
 	echo "confusion histograms will be constructed in addition to object"
 	echo "confusion histograms."
 	echo ""
-	echo "Output is written to the file CH_<dir1>.html or"
+	echo "Output is written to the file CH_d_<dir1>.html or"
 	echo "CH_<fileList>.html, depending upon the arguments used."
 	exit 0
 fi
 
 if [ -d $1 ]
 then
+	# Remove trailing slashes.
+	dir1=${1%/}
+	dir2=${2%/}
+	
 	# Two directories passed (hopefully).
 	# NOTE: Assumes same number of .lg files.
-	ls $1/*.lg > _f1
-	ls $2/*.lg > _f2
-	paste -d" " _f1 _f2 > d_$1
+	ls $dir1/*.lg > _f1
+	ls $dir2/*.lg > _f2
+	paste -d" " _f1 _f2 > d_$dir1
 	rm -f _f1 _f2 
 	
-	INFILE=d_$1
-	shift
-	python $LgEvalDir/src/confHists.py $INFILE $@
-	rm d_$1
+	INFILE=d_$dir1
+	# HACK: ${@:3} selects args starting from the third.
+	python $LgEvalDir/src/confHists.py $INFILE ${@:3}
+	rm d_$dir1
 else
 	# User-provided file list.
 	python $LgEvalDir/src/confHists.py $@

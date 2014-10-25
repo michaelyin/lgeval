@@ -17,13 +17,7 @@ from lgio import *
 import SmGrConfMatrix
 import compareTools
 
-# for RIT web service :
-#INKMLVIEWER = "inkml_viewer/index.xhtml?path=../testdata/&files="
-#local :
-INKMLVIEWER = "http://www.cs.rit.edu/~rlaz/inkml_viewer/index.xhtml?path=http://www.cs.rit.edu/~rlaz/testdata/&files="
-MINERRTOSHOW = 3
-
-def main(fileList, minCount, confMat, confMatObj):
+def main(fileList, minCount, confMat, confMatObj, subgraphSize):
 	fileReader = csv.reader(open(fileList), delimiter=' ')
 	htmlStream = None
 	
@@ -54,12 +48,14 @@ def main(fileList, minCount, confMat, confMatObj):
 			(base, _) = os.path.splitext(tail)
 			fileName = base + ".lg"
 			if confMat:
-				for (gt,er) in lg1.compareSubStruct(lg2,[2,3]):
+				# Subgraphs of 2 or 3 primitives.
+				for (gt,er) in lg1.compareSubStruct(lg2,[subgraphSize]):
 					er.rednodes = set(er.nodes.keys()) & nodeClassErr
 					er.rededges = set(er.edges.keys()) & edgeErr
 					matrix.incr(gt,er,fileName)
 			if confMatObj:
-				for (obj,gt,er) in lg1.compareSegmentsStruct(lg2,[2]):
+				# Object subgraphs of 2 objects.
+				for (obj,gt,er) in lg1.compareSegmentsStruct(lg2,[subgraphSize]):
 					er.rednodes = set(er.nodes.keys()) & nodeClassErr
 					er.rededges = set(er.edges.keys()) & edgeErr
 					matrixObj.incr(obj,gt,er,fileName)
@@ -157,23 +153,28 @@ def main(fileList, minCount, confMat, confMatObj):
 	htmlStream.write("<font face=\"helvetica,arial,sans-serif\">")
 	
 	htmlStream.write("<h2>LgEval Structure Confusion Histograms</h2>")
-	htmlStream.write('\n<b>'+ fileList + '</b><br>')
+	htmlStream.write('<p><b>'+ fileList + '</b><br>')
+	htmlStream.write('<b>Subgraphs:</b> ' + str(subgraphSize) + ' nodes<br>')
 	htmlStream.write(time.strftime("%c"))
 	htmlStream.write('<br>')
+	htmlStream.write('<p><b>Note:</b> Only primitive-level graph confusions occurring at least '+str(minCount)+' times appear below.<br><Note:</b><b>Note:</b> Individual primitive errors may appear in multiple error graphs (e.g. due to segmentation errors).</p>')
+	htmlStream.write('<UL>')
 
-        htmlStream.write('<p><b>Note:</b> Only primitive-level graph confusions occurring at least '+str(minCount)+' times appear below.<br><Note:</b><b>Note:</b> Individual primitive errors may appear in multiple error graphs (e.g. due to segmentation errors).</p>')
-
-	htmlStream.write('<UL><LI><A HREF=\"#Obj\">Object histograms</A> (' + str(objTargets) + ' incorrect targets; ' + str(matrixObj.errorCount()) + ' errors) <LI><A HREF=\"#Prim\">Primitive histograms</A> (' + str(primTargets) + ' incorrect targets; ' + str(matrix.errorCount()) + ' errors) </UL>')
+	if (confMatObj):
+		htmlStream.write('<LI><A HREF=\"#Obj\">Object histograms</A> (' + str(objTargets) + ' incorrect targets; ' + str(matrixObj.errorCount()) + ' errors)')
+	if (confMat):
+		htmlStream.write('<LI><A HREF=\"#Prim\">Primitive histograms</A> (' + str(primTargets) + ' incorrect targets; ' + str(matrix.errorCount()) + ' errors)')
+	htmlStream.write('</UL>')
 	
-        htmlStream.write('<button type="button" font-size="12pt" id="savebutton">&nbsp;&nbsp;Save Selected Files&nbsp;&nbsp;</button>')
-        htmlStream.write('\n<hr>\n')
+	htmlStream.write('<button type="button" font-size="12pt" id="savebutton">&nbsp;&nbsp;Save Selected Files&nbsp;&nbsp;</button>')
+	htmlStream.write('\n<hr>\n')
         
 	if confMatObj:
 		htmlStream.write('<h2><A NAME=\"#Obj\">Object Confusion Histograms</A></h2>')
 		htmlStream.write('<p>\n')
 		htmlStream.write('Object structures recognized incorrectly are shown at left, sorted by decreasing frequency. ' + str(objTargets) + ' incorrect targets, ' + str(matrixObj.errorCount()) + ' errors.')
 		htmlStream.write('</p>\n')
-		matrixObj.toHTML(htmlStream,minCount,INKMLVIEWER)
+		matrixObj.toHTML(htmlStream,minCount,"")
 	
 	if confMat:
 		htmlStream.write("<hr>\n")
@@ -181,18 +182,21 @@ def main(fileList, minCount, confMat, confMatObj):
 		htmlStream.write('<p>Primitive structure recognizes incorrectly are shown at left, sorted by decreasing frequency. ' + str(primTargets) + ' incorrect targets, ' + str(matrix.errorCount()) + ' errors.</p>')
 
 		# Enforce the given limit for all reported errors for primitives.
-                matrix.toHTML(htmlStream,minCount,minCount,INKMLVIEWER)
+                matrix.toHTML(htmlStream,minCount,minCount,"")
 	
 		
 	htmlStream.write('</html>')
 	htmlStream.close()
 		
-# (RZ) Lazy - not checking arguments on assumption this is called from the strConfHist script.
-fileList = sys.argv[1]
+# (RZ) Lazy - not checking arguments on assumption this is called from the
+# strConfHist script.
 minCount = 1
-if len(sys.argv) > 2:
-	minCount = int(sys.argv[2])
-confMatObj = True
-confMat = True if len(sys.argv) > 3 else False 
+fileList = sys.argv[1]
+subgraphSize = int(sys.argv[2])
+if len(sys.argv) > 3:
+	minCount = int(sys.argv[3])
 
-main(fileList, minCount, confMat, confMatObj)
+confMatObj = True
+confMat = True if len(sys.argv) > 4 else False 
+
+main(fileList, minCount, confMat, confMatObj, subgraphSize)

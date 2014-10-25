@@ -10,6 +10,10 @@ then
 	echo "Used to relabel old 'raw' label graph files with N and E"
 	echo "entries, converting short names for relationships to the"
 	echo "longer ones used for CROHME 2014."
+	echo ""
+	echo "Note: '*' relationships to indicate merging primitives into"
+	echo "      objects will be replaced by edges containing the class"
+	echo "      of the object the primitive pair belongs to."
 	exit 0
 fi
 

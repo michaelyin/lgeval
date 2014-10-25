@@ -178,7 +178,9 @@ class Lg(object):
 								self.nlabels[ primPair[0]] == self.nlabels[ primPair[1]]:
 									elabel =  list(self.nlabels[ primPair[0]].keys())[0]
 								else:
-									sys.stderr.write(' !! * used but ambiguous label in nodes (' \
+									sys.stderr.write(' !! * edge used with ambiguous node labels (' \
+										+ str(self.nlabels[ primPair[0]]) + ' vs. ' \
+										+ str(self.nlabels[ primtPair[1]]) + ') in ' \
 										+ self.file + '):\n\t' + str(row) + '\n')
 									self.error = True
 			
@@ -198,7 +200,9 @@ class Lg(object):
 								self.nlabels[ primPair[0]] == self.nlabels[ primPair[1]]:
 									elabel = list(self.nlabels[ primPair[0]].keys())[0]
 								else:
-									sys.stderr.write(' !! * used but ambiguous label in nodes (' \
+									sys.stderr.write(' !! * edge used with ambiguous node labels (' \
+										+ str(self.nlabels[ primPair[0]]) + ' vs. ' \
+										+ str(self.nlabels[ primPair[1]]) + ') in ' \
 										+ self.file + '):\n\t' + str(row) + '\n')
 									self.error = True
 							self.elabels[ primPair ] = { elabel : float(row[4]) }

@@ -197,7 +197,8 @@ class SmallGraph(object):
 			else:
 				svg = svg + '<rect x="'+str(xy[i][0] - r) + '" y="'+str(xy[i][1] - r) + '"width="'+str(2*r)+'" height="' + str(2*r) + '" fill=' + fillcolor + ' stroke-width="2" stroke="'+color+'"/>\n'
 
-			lab = ",".join(self.nodes[k])
+			#lab = ",".join(self.nodes[k])
+			lab = "".join(self.nodes[k])
 			svg = svg + '<text 	x="'+str(xy[i][0]-0.5*r) + '" y="'+str(xy[i][1]+r/2) + '"	font-family="Times"'+'font-size="'+str(1.5*r / sqrt(max([len(lab),1])))+'"'+'>' 
 			svg = svg + lab + '</text>\n'
 			findXY[k] = i
