@@ -347,13 +347,19 @@ The main tools for LgEval are provided in the *bin/* subdirectory. Call a script
 
 
 **confHist**  
-Create structure confusion histograms, which show target structures (e.g. of 2-3 symbols) or stroke groups, along with corresponding error graphs and their frequencies. To save space, the user can specific the minimum number of times that an error must occur to be included in the output. This provides a detailed summary of the specific segmentation and classification errors made by a recognition algorithm. The structure confusion histograms at the object and stroke levels are stored in a (large) .html file.
+Create structure confusion histograms, which show target structures (e.g. of
+1-3 symbols) or stroke groups, along with corresponding error graphs and their
+frequencies. To save space, the user can specify the minimum number of times
+that an error must occur to be included in the output. This provides a detailed
+summary of the specific segmentation and classification errors made by a
+recognition algorithm. The structure confusion histograms at the object and
+stroke levels are stored in a (large) .html file.
 
 **cdiff, ldiff and vdiff**  
 Used to compile labeling errors of given types (*cdiff*), or return the a list of the files containing these errors (*ldiff*) and view them (*vdiff*) using 'less.' Regular expression matching over node and edge labels is supported ('egrep' format), and files with or without segmentation errors may be selected for. These tools operate on the .diff files created by *evaluate.*
 
-**getlg, getinkml**  
-From a file containing a list of .lg files (one per line), copy these files from one directory to another (*getlg*), or copy corresponding .inkml files from one directory to another (*getinkml*).
+**getlg, getinkml, getpdf**  
+From a file containing a list of .lg files (one per line), copy these files from one directory to another (*getlg*), or copy corresponding .inkml files or dot-generated pdf files from one directory to another (*getinkml*,*getpdf*).
 
     
 **lg2lgtree**  
