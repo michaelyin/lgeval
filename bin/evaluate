@@ -23,16 +23,18 @@ then
 	echo "to generate the list of files to be compared (i.e. if a file is"
 	echo "not in the ground truth directory, it will not be considered)."
 	echo ""
-	echo "If a list of files is provided instead ('output target' on each line)"
+	echo "If a list of file pairs is provided instead ('output target' on each line)"
 	echo "then these file pairs are used for evaluation."
 	echo ""
 	echo "Outputs"
 	echo "-----------------------------"
 	echo " Results<outputDir/fileListName>/"
-	echo "    00_RawResults.csv:      raw metrics spreadsheet"
-	echo "    00_Summary.txt:         summary of performance metrics"
-	echo "    ConfusionMatrices.csv/.html:  confusion matrix spreadsheet (errors)"
-	echo "    FileResults.csv: all evaluated files, with correct/incorrect indication"
+	echo "    ConfusionMatrices.*:    confusion matrix spreadsheet (errors in csv/html)"
+	echo "    FileMetrics.csv:        file metrics spreadsheet"
+	echo "    FileResults.csv:        evaluated files, with correct/incorrect indication"
+	echo "    Summary.txt:            summary of performance metrics"
+	echo "    labelsGT.txt:           list of node and edge labels in ground truth"
+	echo "    labelsOutput.txt:       list of node and edge labels in output files"
 	echo "" 
 	echo "    Metrics/: directory with .csv (metric) and .diff (difference) files"
 	echo "    graphErrors/: if dot output requested, visualizations for files with"
@@ -53,20 +55,25 @@ TARGETS=""
 OUTPUTS=""
 if ! [ -d $1 ]
 then
-	echo "File List: $1"
+	LABEL_STRING="List File: $1"
+	echo "$LABEL_STRING"
 	MODE="List"
 	# Get the targets
 	OUTPUTS=`awk '{ print $1; }' $1`
 	OUTARR=($OUTPUTS)
 	TARGETS=`awk '{ print $2; }' $1`
 
+
 	if [ $# -gt 1 ]
 	then
 		DOTARG=$2
 	fi
 else
-	echo "Output File Directory:  $1"
-	echo "Ground Truth Directory: $2"
+	# Peculiar '$<string>' styntax is to preserve the newline.
+	OUT_STRING="Output File Directory:  $1"
+	GT_STRING="Ground Truth Directory: $2"
+	LABEL_STRING=$(printf '%s\n%s' "$OUT_STRING" "$GT_STRING")
+	echo "$LABEL_STRING"
 
 	TARGETS=`ls $2/*.lg`
 
@@ -95,6 +102,16 @@ fi
 # Compute all .csv metrics outputs (per-file), and .diff results (per-file).
 echo "Evaluating files..."
 
+# Compile labels from ground truth. This is needed for confusion matrices to
+# be properly defined.
+echo "$TARGETS" > $ResultsDir/tfileTarget
+python $LgEvalDir/src/compileLabels.py "$ResultsDir/tfileTarget" > "$ResultsDir/labelsGT.txt"
+
+# Do the same for outputs. This can come handy in many places.
+echo "$OUTPUTS" > $ResultsDir/tfileTarget
+python $LgEvalDir/src/compileLabels.py "$ResultsDir/tfileTarget" > "$ResultsDir/labelsOutput.txt"
+rm $ResultsDir/tfileTarget
+
 INDEX=0
 for file in $TARGETS
 do
@@ -120,8 +137,6 @@ do
 		if [ -n "$DIFF" ]
 		then
 			echo "$DIFF" > $ResultsDir/Metrics/$FNAME.diff 
-			# Record files with errors in the "Errors" file.
-			#echo "$nextFile" >> $ResultsDir/FilesIncorrect.txt
 
 			# If a third argument is provided, generate a .pdf file to visualize
 			# differences between graphs.
@@ -140,8 +155,6 @@ do
 			CORRECT="Incorrect"
 		else
 			rm -f $ResultsDir/Metrics/$FNAME.diff
-			# Record correct files in the "Correct" file.
-			#echo "$nextFile" >> $ResultsDir/FilesCorrect.txt
 		fi
 
 		# Add record of evaluating the file.
@@ -165,9 +178,9 @@ else
 	touch $ResultsDir/$BNAME.diff  # empty - no errors.
 fi
 
-python $LgEvalDir/src/sumMetric.py $ResultsDir/$BNAME.csv > $ResultsDir/00_Summary.txt
-python $LgEvalDir/src/sumDiff.py $ResultsDir/$BNAME.diff html > $ResultsDir/ConfusionMatrices.html
-python $LgEvalDir/src/sumDiff.py $ResultsDir/$BNAME.diff > $ResultsDir/ConfusionMatrices.csv
+python $LgEvalDir/src/sumMetric.py "$LABEL_STRING" $ResultsDir/$BNAME.csv > $ResultsDir/Summary.txt
+python $LgEvalDir/src/sumDiff.py $ResultsDir/$BNAME.diff $ResultsDir/labelsGT.txt html > $ResultsDir/ConfusionMatrices.html
+python $LgEvalDir/src/sumDiff.py $ResultsDir/$BNAME.diff $ResultsDir/labelsGT.txt  > $ResultsDir/ConfusionMatrices.csv
 
 # RZ Oct. 2014: Create spreadsheet pairing file names with metrics.
 # Clean up raw metric data to make the file smaller and simpler.
@@ -184,7 +197,7 @@ awk -F',' '{ for (i=2;i<=NF;i+=2) printf ("%s%c", $i, i + 2 <= NF ? "," : "\n")}
 
 # Combine file names with raw data metrics, then add header labels.
 paste -d , $ResultsDir/FileResults.csv $ResultsDir/Data.csv > $ResultsDir/DataNew.csv
-cat $ResultsDir/HeaderRow.csv $ResultsDir/DataNew.csv > $ResultsDir/00_RawResults.csv
+cat $ResultsDir/HeaderRow.csv $ResultsDir/DataNew.csv > $ResultsDir/FileMetrics.csv
 
 # Clean up.
 rm -f $ResultsDir/Headers.csv $ResultsDir/HeaderRow.csv $ResultsDir/Data.csv

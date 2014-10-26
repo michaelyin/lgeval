@@ -119,14 +119,18 @@ def printHist(hist,N,field_width):
 
 def main():
 	if len(sys.argv) < 2:
-		print("usage : [[python]] sumMetric.py <file1.m> [CSV] \n")
+		print("Usage : [[python]] sumMetric.py <label> <file1.m> [CSV] \n")
 		print("    [CSV] : print all results in one line \n")
+		print("")
+		print("'label' is a string used to identify data used for comparison.")
 		sys.exit(0)
+
 	showCSV = False
-	if len(sys.argv) > 2:
+	if len(sys.argv) > 3:
 		showCSV = True
 	# Read data from CSV file.
-	fileName = sys.argv[1]
+	dataSourceLabel = sys.argv[1]
+	fileName = sys.argv[2]
 	try:
 		fileReader = csv.reader(open(fileName))
 	except:
@@ -205,9 +209,10 @@ def main():
 		
 		# Add file name and date.
 		print("LgEval Evaluation Summary")
-		print("")
-		print(os.path.splitext( os.path.split(fileName)[1]) )[0]
 		print(time.strftime("%c"))
+		print("")
+		print(dataSourceLabel)
+		#print(os.path.splitext( os.path.split(fileName)[1]) )[0]
 		print('')
 
 		print("****  PRIMITIVES   **************************************************************")
@@ -447,9 +452,5 @@ def main():
 		printTable(fieldWidth,['+ Classes',100 * float(correctExps)/nbEM,nbEM,correctExps,nbEM-correctExps,'*Final'])
 		printTable(fieldWidth,['Class/Det',expRelative,correctStructure,correctExps,'']) #correctStructure-correctExps])
 		print('')
-		#print('  * Structure + Classes provides the \'correct\' recognition rate:')
-		#print('    this includes only files with correct objects, correctly related objects,')
-		#print('    and both correct object and relationship class labels.')
-
 
 main()

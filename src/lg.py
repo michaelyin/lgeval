@@ -38,11 +38,15 @@ class Lg(object):
 		self.hiddenEdges = {}
 		self.cmpNodes = compareTools.cmpNodes
 		self.cmpEdges = compareTools.cmpEdges
-
+	
+		
 		fileName = None
 		nodeLabels = {}
 		edgeLabels = {}
 		
+		validAsteriskEdges = set()
+		invalidAsteriskNodes = set()
+
 		if len(args) == 1:
 			fileName = args[0]
 			self.file = fileName # DEBUG: add filename for debugging purposes.
@@ -173,16 +177,28 @@ class Lg(object):
 								# sys.stderr.write(' !! Repeated edge label entry (' \
 										# + self.file + '):\n\t' + str(row) + '\n')
 								# self.error = True
-							if elabel == '*':# if it uses the old fashion segmentation label, convert it by finding the (only) node label
+							if elabel == '*':
+								# if using old fashion segmentation label, convert it by finding the (only) node label
 								if primPair[0] in self.nlabels and primPair[1] in self.nlabels and \
 								self.nlabels[ primPair[0]] == self.nlabels[ primPair[1]]:
 									elabel =  list(self.nlabels[ primPair[0]].keys())[0]
+									
+									validAsteriskEdges.add( primPair )
+
 								else:
 									sys.stderr.write(' !! * edge used with ambiguous node labels (' \
 										+ str(self.nlabels[ primPair[0]]) + ' vs. ' \
 										+ str(self.nlabels[ primtPair[1]]) + ') in ' \
-										+ self.file + '):\n\t' + str(row) + '\n')
+										+ self.file + '):\n\t' + ", ".join(row) + '\n')
+									
+									# RZ: Oct. 14 - cheap and dirty correction.
+									elabel = 'MergeError'
+									self.nlabels[ primPair[0] ] = { elabel : 1.0 }
+									self.nlabels[ primPair[1] ] = { elabel : 1.0 }
 									self.error = True
+
+									invalidAsteriskNodes.add( primPair[0] )
+									invalidAsteriskNodes.add( primPair[1] )
 			
 							# Add (or replace) entry for the label.
 							# Feb. 2013 - allow no weight.
@@ -195,16 +211,27 @@ class Lg(object):
 							# as a dictionary.
 							primPair = ( row[1].strip(), row[2].strip() )
 							elabel = row[3].strip()
-							if elabel == '*':# if it uses the old fashion segmentation label, convert it by finding the (only) node label
+							if elabel == '*':
+								# if using old fashion segmentation label, convert it by finding the (only) node label
 								if primPair[0] in self.nlabels and primPair[1] in self.nlabels and \
 								self.nlabels[ primPair[0]] == self.nlabels[ primPair[1]]:
 									elabel = list(self.nlabels[ primPair[0]].keys())[0]
+									validAsteriskEdges.add( primPair )
+
 								else:
 									sys.stderr.write(' !! * edge used with ambiguous node labels (' \
 										+ str(self.nlabels[ primPair[0]]) + ' vs. ' \
 										+ str(self.nlabels[ primPair[1]]) + ') in ' \
-										+ self.file + '):\n\t' + str(row) + '\n')
+										+ self.file + '):\n\t' + ", ".join(row) + '\n')
+									
+									elabel = 'MergeError'
+									self.nlabels[ primPair[0] ] = { elabel : 1.0 }
+									self.nlabels[ primPair[1] ] = { elabel : 1.0 }
 									self.error = True
+
+									invalidAsteriskNodes.add( primPair[0] )
+									invalidAsteriskNodes.add( primPair[1] )
+
 							self.elabels[ primPair ] = { elabel : float(row[4]) }
 				elif entryType == 'O':
 					if len(row) < MIN_OBJECT_ENTRY_LENGTH:
@@ -240,7 +267,7 @@ class Lg(object):
 								#nid2 = n2.strip()
 								if nid1 != nid2:
 									primPair = ( nid1, nid2 )
-									elabel = nlabel#'*' #segmentation
+									elabel = nlabel 
 									if primPair in self.elabels.keys():
 										elabelDict = self.elabels[ primPair ]
 										
@@ -323,6 +350,34 @@ class Lg(object):
 		if anonNode:
 			sys.stderr.write('  ** Anonymous labels created for:\n\t' \
 				+ str(anodeList) + '\n')
+
+
+		# RZ Oct. 2014: add invalid merge edges and node labels where missing.
+		#    This catches when a valid * edge is connected to an invalid one,
+		#    relabeling the edge.
+		invalidAsteriskNodeList = sorted( list(invalidAsteriskNodes) )
+		while len(invalidAsteriskNodeList) > 0:
+			# Remove last element from the list.
+			nextPrimId = invalidAsteriskNodeList.pop()
+			
+			# Linear traversal for matches (a 'region growing' algorithm)
+			# Add a traversal each time a new connected edge is found.
+			# NOTE: this will not add edges missing in the input (e.g.
+			#  if '*' is defined in one direction but not the other.
+			for (parent, child) in validAsteriskEdges:
+				otherId = None
+				if parent == nextPrimId:
+					otherId = child
+				if child == nextPrimId:
+					otherId = parent
+
+				if otherId != None:
+					if not otherId in invalidAsteriskNodes:
+						invalidAsteriskNodes.add( otherId )
+						invalidAsteriskNodeList.append( otherId )
+
+					self.nlabels[ otherId ] = { 'MergeError' : 1.0 }
+					self.elabels[ (parent, child) ] = { 'MergeError' : 1.0 }
 
 	##################################
 	# String, CSV output
@@ -429,7 +484,7 @@ class Lg(object):
 	##################################
 	def segmentGraph(self):
 		"""Return dictionaries from segments to strokes, strokes to segments,
-		segments without parents, and edges labeled as segment ('*')."""
+		segments without parents, and edges labeled as segment (w. symbol label)."""
 		primitiveSegmentMap = {}
 		segmentPrimitiveMap = {}
 		#noparentSegments = []
@@ -633,16 +688,39 @@ class Lg(object):
 			if len(diff1) + len(diff2) > 0:
 				segDiffs[primitive] = ( diff1, diff2 )
 				
-			# Look for correct segments, ie primitive sets which are the same in both graphs
-			# NOTE: even if this algorithm is not symmetric, the result is symmetric
-			for (lab1,seg1) in ps1[primitive].items():
-				if(seg1, lab1) not in correctSegmentsAndClass: # already found, no need to search
-					for (lab2,seg2) in ps2[primitive].items():
-						if sp1[seg1][0] == sp2[seg2][0] and not lab1 == 'ABSENT' and not lab2 == 'ABSENT':
-							correctSegments.add(seg1)
-							(cost,_) = self.cmpNodes([lab1],[lab2]) 
-							if (cost == 0):
-								correctSegmentsAndClass.add((seg1, lab1))
+		# RZ: Oct. 2014 - replacing method used to evaluate segmentation. Also
+		#     add checks for segments in the target being disjoint.
+		#
+		# Objects are defined by a set of primitives, plus a label. 
+		# NOTE: This currently will support mutliple labels, but will lead to invalid
+		#   "Class/Det" values in 00_Summary.txt if there are multiple labels.
+		targets = {}
+		matchedTargets = set()
+		for ObjID in sp2.keys():
+			# Skip absent nodes - they are not valid targets.
+			if 'ABSENT' not in sp2[ ObjID ][ 1 ]:
+				# Convert primitive set to a sorted tuple list.
+				primitiveTupleList = tuple( sorted( list( sp2[ ObjID ][ 0 ] ) ) )
+			
+				# Store target label in targets dict, matches in matchedTargets dict (false init.)
+				targets[ primitiveTupleList ] = sp2[ ObjID][1]
+		
+		# Look for matches.
+		# Do *not* allow a primitive set to be matched more than once.
+		for ObjID in sp1.keys():
+			primitiveTupleList = tuple( sorted( list(sp1[ObjID][ 0 ] )))
+			if primitiveTupleList in targets.keys() \
+					and not primitiveTupleList in matchedTargets:
+				matchedTargets.add( primitiveTupleList )
+				correctSegments.add( ObjID )
+				
+				# Obtain matching labels. Create list of correct (segmentId, label) pairs
+				# for *all* matching labels.
+				outputLabels = set(sp1[ ObjID ][ 1 ])
+				matchingLabels = list( outputLabels.intersection( targets[ primitiveTupleList ] ) )
+				ObjIDRepeats = [ObjID] * len(matchingLabels)
+
+				correctSegmentsAndClass.add( tuple( zip(ObjIDRepeats, list(matchingLabels))))
 
 		# Compute total number of object classifications (recognition targets)
 		nbSegmClass = 0
@@ -651,59 +729,55 @@ class Lg(object):
 
 		# Compute the specific 'object-level' graph edges that disagree, at the
 		# level of primitive-pairs. 
-		primRelErrors = 0
 		segRelErrors = 0
 		correctSegRels = 0
 		correctSegRelLocations = 0
 		primRelEdgeDiffs = {}
 		
+		# Iterate over object relationships in the output graph.
 		for thisPair in sre1.keys():
-			error = False
 			misLabeled = False
 			falsePositive = False
 
 			thisParentIds = set(sp1[ thisPair[0] ][0])
 			thisChildIds = set(sp1[thisPair[1] ][0])
 
-			# Check whether the objects are correctly segmented (avoid counting
-			# over-segmented objects as having valid relationships)
-			if not ( thisPair[0] in correctSegments and  thisPair[1] in correctSegments):
-				error = True
-				falsePositive = True  # DEBUG - segments must be valid for a false positive.
+			# Check whether the objects are correctly segmented by their object identifiers
+			# (avoid counting mis-segmented objects as having valid relationships)
+			if not ( thisPair[0] in correctSegments and  thisPair[1] in correctSegments) or \
+					not thisPair in sre2.keys():
+				falsePositive = True
+			else:
+				# Check that all edges between object primitives are the same.
+				for parentId in thisParentIds:
+					for childId in thisChildIds:
+						if not (parentId, childId) in lg2.elabels.keys():
+							falsePositive = True
+							continue
+						else:
+							(cost, diffLabelPairList) = \
+									self.cmpEdges(self.elabels[ (parentId, childId) ].keys(), \
+									lg2.elabels[ (parentId, childId) ].keys())
+							if not cost == 0:
+								misLabeled = True
+								continue
 
-			# A 'correct' edge has the same label between all primitives
-			# in the two segments.
-			for parentId in thisParentIds:
-				for childId in thisChildIds:
-					# Distinguish relationship edge locations (structure) from label-only errors.
-					# DEBUG: compare only label sets, not confidence values.
-					if not (parentId, childId) in lg2.elabels.keys():
-						falsePositive = True
-					else:
-						(cost, diffLabelPairList) = self.cmpEdges(self.elabels[ (parentId, childId) ].keys(), \
-								lg2.elabels[ (parentId, childId) ].keys())
-						if not (0,[]) == (cost, diffLabelPairList):
-							misLabeled = True
-
-					# TO DO!! This assumes single labels on primitives.
 					if falsePositive or misLabeled:
-						error = True
-						primRelErrors += 1
-						primRelEdgeDiffs[ thisPair ] = [ ('Error',1.0) ]
 						continue
-		
-			# RZ DEBUG: count primitive edge errors separately from segment (i.e whole objects/symbols)
-			if error:
+					
+			# NOTE: assumes single labels on primitives.
+			# primRelEdgeDiffs records which object pairs have incorrect labels.
+			if falsePositive or misLabeled:
+				self.error = True
 				segRelErrors += 1
+				primRelEdgeDiffs[ thisPair ] = [ ('Error',1.0) ]
 			else:
 				correctSegRels += 1
-
-			# Count correct edge locations, even if mislabeled.
-			if not error or falsePositive == False:
+			
+			# Count correct relationship structures/locations.
+			if not falsePositive:
 				correctSegRelLocations += 1
 
-			self.error |= error
-		
 		# Compute object counts *without* inserted absent nodes.
 		lg2.removeAbsent()
 		self.removeAbsent()
@@ -716,17 +790,19 @@ class Lg(object):
 
 		# For input file, need to compare against all objects after including
 		# missing/additional absent nodes and edges.
-		nLg1ObjsAbsent = len(sp1.keys())
+		nLg1ObjsWithAbsent = len(sp1.keys())
 
 		lg2.addAbsent(self)
 		self.addAbsent(lg2)
 		
 
+		#print(sorted(sre1.keys()))
+		#print(sorted(sre2.keys()))
 		# RZ (Oct. 2014) Adding indicator variables for different correctness scenarios.
 		hasCorrectSegments = 1 if len(correctSegments) == nLg2Objs and \
-				len(correctSegments) == nLg1ObjsAbsent else 0
+				len(correctSegments) == nLg1ObjsWithAbsent else 0
 		hasCorrectSegmentsAndLabels = 1 if len(correctSegmentsAndClass) == nLg2Objs and \
-				len(correctSegmentsAndClass) == nLg1ObjsAbsent else 0
+				len(correctSegmentsAndClass) == nLg1ObjsWithAbsent else 0
 		
 		hasCorrectRelationLocations = 1 if correctSegRelLocations == len(sre1.keys()) and \
 				correctSegRelLocations == len(sre2.keys()) else 0

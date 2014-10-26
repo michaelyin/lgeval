@@ -104,13 +104,13 @@ else
 	touch $ResultsDir/Diffs.diff  # empty - no errors.
 fi
 
-python $LgEvalDir/src/sumMetric.py $ResultsDir/Metrics.csv > $ResultsDir/__Summary
+python $LgEvalDir/src/sumMetric.py "LABEL" $ResultsDir/Metrics.csv > $ResultsDir/__Summary
 python $LgEvalDir/src/sumDiff.py $ResultsDir/Diffs.diff html > $ResultsDir/ConfusionMatrix.html
 
 for typErr in Mat Cell Row Col Symb
 do
 	cat $ResultsDir/MatMetrics/*${typErr}.csv > $ResultsDir/Metrics${typErr}.csv
-	python $LgEvalDir/src/sumMetric.py $ResultsDir/Metrics${typErr}.csv > $ResultsDir/_${typErr}_Summary
+	python $LgEvalDir/src/sumMetric.py "LABEL" $ResultsDir/Metrics${typErr}.csv > $ResultsDir/_${typErr}_Summary
 done
 
 echo "done."

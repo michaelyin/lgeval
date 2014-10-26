@@ -130,7 +130,7 @@ lg.absentNodes      Set of identifiers not present in the lg relative
 Graph Segment Output (output of lg.segmentGraph())
 ----------------------------------------------------
 segmentPrimitiveMap    Dictionary from object identifier to a pair (a,b)
-                       a: list of labels;  b: list of primitives in the object
+                       a: set of primitives in the object, b: list of labels
 primitiveSegmentMap    Dictionary from primitive identifier to 
                        another dictionary mapping a label to the object id
                        associated with the primitive for this relationship type

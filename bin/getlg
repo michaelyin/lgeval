@@ -31,5 +31,6 @@ fi
 
 for file in `cat $1`
 do
-	cp $2/$file $3
+	LGFILE=`basename $file`
+	cp $2/$LGFILE $3
 done

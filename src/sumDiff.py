@@ -74,21 +74,49 @@ def writeCSS(output, allID):
 	output.write('</style></head>\n')
 
 def main():
-	if len(sys.argv) < 2:
-		print("Usage : [[python]] sumDiff.py <file1.diff> [HTML]\n")
+	if len(sys.argv) < 3:
+		print("Usage : [[python]] sumDiff.py <file1.diff> <labelsGT.txt> [HTML]\n")
 		print("	Merge results for each line in file1.diff into confusion Matrices.")
 		print("	By default output is sent to stdout in CSV format.")
+		print(" requires list of GT labels from labelsGT.txt.")
 		print("	[HTML] option changes output format to HTML.")
 		sys.exit(0)
 	# Read data from CSV file.
 	fileName = sys.argv[1]
+	labelFile = sys.argv[2]
 	try:
 		fileReader = csv.reader(open(fileName))
 	except:
 		sys.stderr.write('  !! IO Error (cannot open): ' + fileName)
-		sys.exit(0)
+		sys.exit(1)
+
+	try:
+		labelfileReader = csv.reader(open(labelFile))
+	except:
+		sys.stderr.write('  !! IO Error (cannot open): ' + fileName)
+		sys.exit(1)
+
+	# Read for node and edge label sets.
+	readEdges = False
+	gtNodeLabels = set()
+	gtEdgeLabels = set()
+	for row in labelfileReader:
+		if len(row) == 0:
+			continue
+		
+		nextEntry = row[0].strip()
+		if nextEntry == 'NODE LABELS:':
+			continue
+		elif nextEntry == 'EDGE LABELS:':
+			readEdges = True
+		else:
+			if readEdges:
+				gtEdgeLabels.add(nextEntry)
+			else:
+				gtNodeLabels.add(nextEntry)
+
 	withHTML = False
-	if len(sys.argv) > 2:
+	if len(sys.argv) > 3:
 		withHTML = True
 	#confusion matrix = dict->dict->int
 	labelM = collections.defaultdict(collections.defaultdict(int).copy)
@@ -154,8 +182,9 @@ def main():
 			continue
 		
 	# Obtain the list of edge labels that do not appear on nodes.
+	# DEBUG: need to consult all GT labels in general case (handling '*' input).
 	mergeEdgeLabel = '*'
-	relOnlyLabels = allSR.difference(symbolLabels)
+	relOnlyLabels = allSR.difference(symbolLabels).difference(gtNodeLabels)
 	relMergeLabels = relOnlyLabels.union(mergeEdgeLabel)
 
 	# Create a modified confusion histogram where all symbol/segmentation
@@ -188,8 +217,9 @@ def main():
 		writeCSS(sys.stdout, allLabel.union(allSR))
 		print("<font face=\"helvetica,arial,sans-serif\">")
 		print("<h2>LgEval Error Summary</h2>")
-		print("<b>" + os.path.splitext( os.path.split(fileName)[1] )[0] + "</b><br>")
 		print(time.strftime("%c"))
+		print("<br>\n")
+		print("<b>File:</b> " + os.path.splitext( os.path.split(fileName)[1] )[0] + "<br>")
 		print("<p>All confusion matrices show only errors. In each matrix, output labels appear in the left column, and target labels in the top row.</p>")
 		print("<UL><LI><A href=\"#nodes\">Node Label Confusion Matrix</A> <LI> <A HREF=\"#ShortEdges\">Edge Label Confusion Matrix (short - ignoring object class confusions)<A> <LI> <A HREF=\"#Edges\">Edge Label Matrix (all labels)</A> </UL>")
 		print ("<hr>")
@@ -198,7 +228,7 @@ def main():
 		affMatHTML(sys.stdout, allLabel, labelM)
 		print("<br><hr><br>")
 		print ("<h2><A NAME=\"ShortEdges\">Edge Label Confusion Matrix (Short)</A></h2>")
-		print ("<p>" + str(len(relOnlyLabels)) + " unique relationship labels + * representing grouping two nodes into an object (any type). " + str(allSegErrors + allRelErrors) + " errors <UL><LI>" + str(allSegErrors) + " Directed segmentation and node pair classification errors (entries in first column and row) <UL><LI><b>" + str(allSegErrors - fposMerge - fnegMerge) + " edges between correctly grouped nodes, but with conflicting classification (* vs. *)</b> <LI>" + str(fposMerge) + " false positive merge edges (* vs. other)<LI>" + str(fnegMerge) + " false negative merge edges (other vs. *) </UL>  <LI>" + str(allRelErrors) + " Directed relationship errors (remaining matrix entries) </UL></p></p>")
+		print ("<p>" + str(len(relOnlyLabels)) + " unique relationship labels + * representing grouping two nodes into an object (any type). " + str(allSegErrors + allRelErrors) + " errors <UL><LI>" + str(allSegErrors) + " Directed segmentation and node pair classification errors (entries in '*'-labeled row and column) <UL><LI><b>" + str(allSegErrors - fposMerge - fnegMerge) + " edges between correctly grouped nodes, but with conflicting classification (* vs. *)</b> <LI>" + str(fposMerge) + " false positive merge edges (* vs. other)<LI>" + str(fnegMerge) + " false negative merge edges (other vs. *) </UL>  <LI>" + str(allRelErrors) + " Directed relationship errors (remaining matrix entries) </UL></p></p>")
 		affMatHTML(sys.stdout, relMergeLabels, ShortEdgeMatrix)
 		#affMatHTML(sys.stdout, relOnlyLabels, spatRelM)
 		
