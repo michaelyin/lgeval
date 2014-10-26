@@ -31,7 +31,6 @@ then
 	echo " Results<outputDir/fileListName>/"
 	echo "    ConfusionMatrices.*:    confusion matrix spreadsheet (errors in csv/html)"
 	echo "    FileMetrics.csv:        file metrics spreadsheet"
-	echo "    FileResults.csv:        evaluated files, with correct/incorrect indication"
 	echo "    Summary.txt:            summary of performance metrics"
 	echo "    labelsGT.txt:           list of node and edge labels in ground truth"
 	echo "    labelsOutput.txt:       list of node and edge labels in output files"
@@ -201,7 +200,7 @@ cat $ResultsDir/HeaderRow.csv $ResultsDir/DataNew.csv > $ResultsDir/FileMetrics.
 
 # Clean up.
 rm -f $ResultsDir/Headers.csv $ResultsDir/HeaderRow.csv $ResultsDir/Data.csv
-rm -f $ResultsDir/DataNew.csv
+rm -f $ResultsDir/DataNew.csv $ResultsDir/FileResults.csv
 
 # Remove the compiled metrics and differences, but leave the individual metric/diff
 # files in Metrics to support debugging for malformed or missing files, etc.
