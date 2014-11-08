@@ -155,7 +155,7 @@ def main(fileList, minCount, confMat, confMatObj, subgraphSize):
 	htmlStream.write("<h2>LgEval Structure Confusion Histograms</h2>")
 	htmlStream.write(time.strftime("%c"))
 	htmlStream.write('<p><b>'+ fileList + '</b><br>')
-	htmlStream.write('<b>Subgraphs:</b> ' + str(subgraphSize) + ' nodes<br>')
+	htmlStream.write('<b>Subgraphs:</b> ' + str(subgraphSize) + ' node(s)<br>')
 	htmlStream.write('<br>')
 	htmlStream.write('<p><b>Note:</b> Only primitive-level graph confusions occurring at least '+str(minCount)+' times appear below.<br><Note:</b><b>Note:</b> Individual primitive errors may appear in multiple error graphs (e.g. due to segmentation errors).</p>')
 	htmlStream.write('<UL>')
