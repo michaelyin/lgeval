@@ -1,0 +1,7 @@
+List of things to consider/do.
+
+1. D_S is currently computed as the number of mismatching edges
+   in the segmentation graph, but this includes valid edges
+   with disagreeing labels currently. Consider changing this
+   to be more conistent in the .csv metric and .diff files
+   produced by 'evaluate.'
