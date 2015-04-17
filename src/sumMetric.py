@@ -190,16 +190,17 @@ def main():
 	dcTotal = int(allSum["D_C"])
 	edges = int(allSum["nEdges"])
 	dlTotal = int(allSum["D_L"])
-	dsTotal = int(allSum["D_S"])
 	dbTotal = int(allSum["D_B"])
 	duTotal = int(allSum["dPairs"])
-	
+	dsTotal = int(allSum["D_S"])  # Careful - this is sensitive to symbol class disagreements.
 	dEdgeClassConflicts = int(allSum["edgeDiffClassCount"])
+	dsActual = dsTotal - dEdgeClassConflicts
 
 	if showCSV:
 		print("D_C,D_L,D_S,D_B,D_B(%),var,D_E(%),var,wD_E(%),var")
 		sys.stdout.write(intMetric(allSum,"D_C") + "," +intMetric(allSum, "D_L") \
-			 + "," + intMetric(allSum, "D_S") + "," + intMetric(allSum, "D_B"))
+			 + "," + str(dsActual) + "," \
+			 + intMetric(allSum, "D_B"))
 		reportCoupleCSV(',',meanStdDev(allValues["D_B(%)"],100))
 		reportCoupleCSV(',',meanStdDev(allValues["D_E"],100))
 		reportCoupleCSV(',',weightedMeanStdDev(allValues["D_E"],allValues["nNodes"],100))
@@ -229,7 +230,7 @@ def main():
 		if edges > 0:
 			edgeRate = 100 * float(edges - dlTotal) / edges
 		printTable(fieldWidth,['Edges', edgeRate, edges, edges - dlTotal, dlTotal,\
-				dsTotal - dEdgeClassConflicts, dEdgeClassConflicts, dlTotal-dsTotal])
+				dsActual, dEdgeClassConflicts, dlTotal-dsTotal])
 
 		labelRate = 100.0
 		if nodes + edges > 0:
@@ -266,47 +267,6 @@ def main():
 		print('')
 		print('     SegErr: merge/split   ClErr: valid merge class error   RelErr: relation error')
 		
-		
-		# LEAVING in case this is of use later - hoping that new spreadsheet makes these statistics and
-		# histograms easy to compute as-needed.
-
-		# NUMBER OF CORRECT NODES
-		#print("")
-		#print("CORRECTLY LABELED NODES")
-		#printTable(fieldWidth,['*Nodes-CL',nodeAllRate,int(allSum["nNodes"]),nodeAllCorrect, nodes - nodeAllCorrect])
-
-
-		# Compute hamming distance metric distributions.
-		#print("\n")
-		#printTable(fieldWidth,['Hamming D.','Mean','StdDev'])
-		#print("---------------------------------------------------------------------------")
-		#for metric in [
-		#		('D_B',1),
-		#		('D_C', 1),
-		#		('D_L',1),
-		#		('D_S',1),
-		#		('D_R',1),
-		#		('D_Bn(%)',100),
-		#		('D_E(%)',100),
-		#		]:
-		#	reportMeanStdDev(fieldWidth,metric[0],allValues[metric[0]],\
-		#			metric[1])
-		#reportWMeanStdDev(fieldWidth,'W-D_E(%)',allValues["D_E(%)"],allValues["nNodes"],100)
-		#print('')
-		#print("      D_B =  D_C + D_L  =  D_C + D_S + D_R")
-		#print("      D_B: All labels; D_C: Nodes; D_L: Dir. edges; D_S: Seg/Obj edges")
-		#print("      D_R: Relationship edges")
-
-		#print("\n")
-		#print("Node Label Error Histogram (D_C)")
-		#printHist(allHist['D_C'],6,fieldWidth)
-		#print("\n")
-
-
-		#print("Directed Edge Label Error Histogram (D_L)")
-		#printHist(allHist['D_L'],6,fieldWidth)
-		#print("\n")
-
 		print("\n")
 
 		print("****  OBJECTS   **************************************************************************") 

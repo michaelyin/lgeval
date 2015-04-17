@@ -716,11 +716,15 @@ class Lg(object):
 				
 				# Obtain matching labels. Create list of correct (segmentId, label) pairs
 				# for *all* matching labels.
+				# DEBUG: empty lists were being matched! Added test for empty matches.
+				# WARNING: Only guaranteed to work for single labels.
 				outputLabels = set(sp1[ ObjID ][ 1 ])
 				matchingLabels = list( outputLabels.intersection( targets[ primitiveTupleList ] ) )
-				ObjIDRepeats = [ObjID] * len(matchingLabels)
-
-				correctSegmentsAndClass.add( tuple( zip(ObjIDRepeats, list(matchingLabels))))
+				if len(matchingLabels) > 0:
+					ObjIDRepeats = [ObjID] * len(matchingLabels)
+					correctSegmentsAndClass.add( tuple( zip(ObjIDRepeats, list(matchingLabels))))
+				#print("NODES  : " + str(primitiveTupleList) + " LABELS: " + str(outputLabels) + " MATCH: " + str(matchingLabels))
+				#print("  CORRECT: " +  str(correctSegmentsAndClass) )
 
 		# Compute total number of object classifications (recognition targets)
 		nbSegmClass = 0
