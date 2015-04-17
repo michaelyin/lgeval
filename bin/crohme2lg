@@ -12,16 +12,16 @@ if($#ARGV < 0 or $#ARGV > 2){
 print "LgEval crohme2lg.pl: .inkml to Label Graph (.lg) Converter
 Copyright (c) H. Mouchère and R. Zanibbi, 2012-2014
 
-Usage:  crohme2lg.pl [-s] fileIn.inkml [fileOut.lg]
+Usage:  crohme2lg.pl [-n] fileIn.inkml [fileOut.lg]
 	
 If no output file is provided, the label graph is printed on the
 standard output (STDOUT).
 
-The option -s produces the short format with 'O' (object) and 'R'
-(relationship) lines, instead of 'N' (primitive node) and 'E'
-(primitive edge) lines.
+The option -n produces the 'N' (primitive node) and 'E' 
+(primitive edge) format, rather than the short format with 'O' (object) and 'R'
+(relationship).
 
-Version : 1.3.1
+Version : 1.3.2
 Authors: Harold Mouchère (LUNAM/University of Nantes/IRCCyN/IVC)
 	R. Zanibbi (DPRL Lab, RIT, USA)
 ";
@@ -31,7 +31,7 @@ exit();
 #define some global var
 my $warning = 1;
 my $nextid = 1; #id generator for virtual seg
-my $shortF = 0; # short format mode
+my $shortF = 1; # short format mode: RZ - changed to make this the default.
 
 my $inheritRelationships = 0;
 #if ($ARGV[0] eq "-t") {
@@ -93,8 +93,8 @@ my %tabSubExpSeg = (
 my $parser = XML::LibXML->new();
 $parser->set_options({no_network=>1,recover=>2,validation=>0, suppress_warnings=>1,suppress_errors=>1});
 
-if(($#ARGV <= 2) and ($ARGV[0] eq "-s")){
-	$shortF =1;
+if(($#ARGV <= 2) and ($ARGV[0] eq "-n")){
+	$shortF =0;
 	shift;
 }
 

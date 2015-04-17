@@ -26,10 +26,10 @@ then
 	echo "file) is visualized."
 	echo ""
 	echo "The graph_type argument may be one of the following:"
-	echo "   - [default; no argument] a directed graph over strokes."
+	echo "   - [default; no argument] a directed graph over objects."
 	echo "   - b : a bipartite graph over primitives"
 	echo "   - s : a bipartite segmentation graph"
-	echo "   - d : a directed acyclic graph over strokes"
+	echo "   - p : a directed graph over strokes"
 	echo "   - t : a tree (NOTE: requires a valid hierachical structure)"
 	exit 0
 fi
