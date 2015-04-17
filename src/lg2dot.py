@@ -342,13 +342,13 @@ def lgDag(lg, lg2, treeOnly, correctSegs, segRelDiffs):
 
 def main():
 	if len(sys.argv) < 2:
-		print("Usage: [[python]] lg2dot.py <lg.csv> [lg2.csv] [ b | s | d | t ]")
+		print("Usage: [[python]] lg2dot.py <lg.csv> [lg2.csv] [ b | s | p | t ]")
 		print("")
 		print("    Produce a dot file containing either a:")
-		print("       1. (default) directed graph over primitives,")
-		print("       2. (b) bipartite graph over primitives,")
-		print("       3. (s) segmentation graph over primitives,")
-		print("       4. (d) directed graph of relationships over objects, or a")
+		print("       1. (default) directed graph of relationships over objects, or a")
+		print("       2. (p) directed graph over primitives,")
+		print("       3. (b) bipartite graph over primitives,")
+		print("       4. (s) segmentation graph over primitives,")
 		print("       5. (t) tree of relationships over objects (assumes hierarchical structure).")
 		print("              (NOTE: all inherited relationships are removed from the graph)")
 		
@@ -383,38 +383,40 @@ def main():
 	lg.hideUnlabeledEdges()
 
 	if len(sys.argv) == 2:
-		# Show the primitive graph.
-		print( lgPrimitiveDot(lg, [], []))
+		# RZ: Modification: show the object graph.
+		# HACK: to get correct segments, compare graph with itself.
+		(_, nodeconflicts, edgeconflicts, segDiffs, correctSegs, \
+				segRelDiffs) = lg.compare(lg)
+		print( lgDag(lg, lg, False, correctSegs, segRelDiffs) )
 
 	elif len(sys.argv) == 3:
 		# Graph types for single graph - check second argument passed (sys.argv[2])
 		# - Bipartite graph (b)
-		# - DAG graph over segments (d)
+		# - DAG graph over segments (default)
 		# - Tree(s) over segments (t)
 		# - Segmentation graph over primitives (s)
-		# - Directed graph over primitives (default)
+		# - Directed graph over primitives (p)
 
 		# HACK: to get correct segments, compare graph with itself.
 		(_, nodeconflicts, edgeconflicts, segDiffs, correctSegs, \
 				segRelDiffs) = lg.compare(lg)
 
-		if sys.argv[2] == 'd':
-			print(lgDag(lg, lg,  False, correctSegs, segRelDiffs))
-		elif sys.argv[2] == 't':
+		if sys.argv[2] == 't':
 			print(lgDag(lg, lg, True, correctSegs, segRelDiffs))
 		elif sys.argv[2] == 's':
 			print( lgsegdot(lg, {}, {}) )
 		elif sys.argv[2] == 'b':
 			print(lgdot(lg, [], []))
-		else:
-			# Compare two primitive graphs.
-			# Compute graph difference.
+		elif sys.argv[2] == 'p':
+			print( lgPrimitiveDot(lg, nodeconflicts, edgeconflicts) )
+		else: 
+			# Difference DAG over objects.         
 			comparisonFileName = sys.argv[2]
 			lg2 = Lg(comparisonFileName)
 			(_, nodeconflicts, edgeconflicts, segDiffs, correctSegs, \
 				segRelDiffs) = lg.compare(lg2)
-			print( lgPrimitiveDot(lg, nodeconflicts, edgeconflicts) )
-
+			print(lgDag(lg, lg2,  False, correctSegs, segRelDiffs))
+	
 
 	elif len(sys.argv) > 3:
 		# Compute graph difference.

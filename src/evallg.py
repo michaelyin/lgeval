@@ -33,11 +33,11 @@ def runBatch(fileName, defaultFileOrder, confMat, confMatObj):
 
 	htmlStream = None
 	matrix = None
-        matrixObj = None
+	matrixObj = None
 	if confMat:
 		matrix = SmGrConfMatrix.ConfMatrix()
-        if confMatObj:
-                matrixObj = SmGrConfMatrix.ConfMatrixObject()
+		if confMatObj:
+			matrixObj = SmGrConfMatrix.ConfMatrixObject()
 
 	for row in fileReader:
 		# Skip comments and empty lines.
@@ -81,12 +81,12 @@ def runBatch(fileName, defaultFileOrder, confMat, confMatObj):
 					er.rededges = set(er.edges.keys()) & edgeErr
 					matrixObj.incr(obj,gt,er,toShow)
                         
-        htmlStream = None
+		htmlStream = None
 	if confMat or confMatObj:
 		htmlStream = open(fileName + '.html','w')
 		htmlStream.write('<html xmlns="http://www.w3.org/1999/xhtml">')
 		htmlStream.write('<h1> File :'+fileName+'</h1>')
-                htmlStream.write('<p>Only errors with at least '+str(MINERRTOSHOW)+' occurrences appear</p>')
+		htmlStream.write('<p>Only errors with at least '+str(MINERRTOSHOW)+' occurrences appear</p>')
 	if confMat:
 		htmlStream.write('<h2> Substructure Confusion Matrix </h2>')
 		matrix.toHTML(htmlStream,MINERRTOSHOW,INKMLVIEWER)
@@ -95,7 +95,7 @@ def runBatch(fileName, defaultFileOrder, confMat, confMatObj):
 		matrixObj.toHTML(htmlStream,MINERRTOSHOW,INKMLVIEWER)
 	if confMat or confMatObj:
 		htmlStream.write('</html>')
-                htmlStream.close()
+		htmlStream.close()
 		
 	metricStream.close()
 	diffStream.close()
