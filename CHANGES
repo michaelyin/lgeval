@@ -1,5 +1,17 @@
 CHANGES File
 
+May 17, 2015
+
+- DEBUG:
+
+  ABSENT nodes were 'matching' against target objects (e.g. single-stroke
+  symbols). This was producing negative false positive values, and inaccurate
+  precision values. Added a test in lg.py compareSegments() function to fix this
+  (around line 710).
+
+
+----
+
 Oct. 1-9, 2014
 R. Zanibbi
 

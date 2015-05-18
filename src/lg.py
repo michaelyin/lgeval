@@ -708,6 +708,11 @@ class Lg(object):
 		# Look for matches.
 		# Do *not* allow a primitive set to be matched more than once.
 		for ObjID in sp1.keys():
+			# HACK (RZ): DEBUG - was not checking whether matched objects were
+			#               missing before absent nodes were added.
+			if 'ABSENT' in sp1[ ObjID ][ 1 ]:
+				continue
+
 			primitiveTupleList = tuple( sorted( list(sp1[ObjID][ 0 ] )))
 			if primitiveTupleList in targets.keys() \
 					and not primitiveTupleList in matchedTargets:
