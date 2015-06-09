@@ -192,14 +192,13 @@ def main():
 	dlTotal = int(allSum["D_L"])
 	dbTotal = int(allSum["D_B"])
 	duTotal = int(allSum["dPairs"])
-	dsTotal = int(allSum["D_S"])  # Careful - this is sensitive to symbol class disagreements.
+	dsTotal = int(allSum["D_S"])  
 	dEdgeClassConflicts = int(allSum["edgeDiffClassCount"])
-	dsActual = dsTotal - dEdgeClassConflicts
 
 	if showCSV:
 		print("D_C,D_L,D_S,D_B,D_B(%),var,D_E(%),var,wD_E(%),var")
 		sys.stdout.write(intMetric(allSum,"D_C") + "," +intMetric(allSum, "D_L") \
-			 + "," + str(dsActual) + "," \
+			 + "," + str(dsTotal) + "," \
 			 + intMetric(allSum, "D_B"))
 		reportCoupleCSV(',',meanStdDev(allValues["D_B(%)"],100))
 		reportCoupleCSV(',',meanStdDev(allValues["D_E"],100))
@@ -230,7 +229,7 @@ def main():
 		if edges > 0:
 			edgeRate = 100 * float(edges - dlTotal) / edges
 		printTable(fieldWidth,['Edges', edgeRate, edges, edges - dlTotal, dlTotal,\
-				dsActual, dEdgeClassConflicts, dlTotal-dsTotal])
+				dsTotal, dEdgeClassConflicts, dlTotal-dsTotal])
 
 		labelRate = 100.0
 		if nodes + edges > 0:

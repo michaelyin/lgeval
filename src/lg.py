@@ -625,7 +625,6 @@ class Lg(object):
 		# List and count errors due to segmentation.
 		# Use cmpNodes to compare the labels of symbols.
 		# Idea : build the sub graph with the current primitive as center and only 
-		#print("IN---")
 		for primitive in ps1.keys():
 			edgeFromP1 = {}
 			edgeFromP2 = {}
@@ -651,7 +650,7 @@ class Lg(object):
 						else:
 							edgeFromP2[p] = [lab2]
 
-			# Compute differences in edges labels with cmpNodes (as they are symbol labels)
+			# Compute differences in edge labels with cmpNodes (as they are symbol labels)
 			diff1 = set([])
 			diff2 = set([])
 			
@@ -660,15 +659,19 @@ class Lg(object):
 			for p in commonPrim:
 				(cost,diff) = self.cmpNodes(edgeFromP1[p], edgeFromP2[p])
 				edgeDiffCount = edgeDiffCount + cost
-				if cost > 0: # somehow they disagree, thus add in both sets
-					diff1.add(p)
-					diff2.add(p)
 
-				# RZ: Record edges that are specifically valid merges with disagreeing labels.
+				# RZ June 2015: Record edges that are specifically valid merges with disagreeing labels.
 				#     Also record sets of undirected edges that disagree.
 				for (l1,l2) in diff:
 					if l1 in self.nlabels[p].keys() and l2 in lg2.nlabels[p].keys():
 						edgeDiffClassCount += 1
+					
+					# RZ: we do not have a *segmentation* difference if corresponding segm.
+					#     edges have a label.
+					elif cost > 0:
+						diff1.add(p)
+						diff2.add(p)
+
 					if not (p, primitive) in undirDiffClassSet and not (primitive, p) in undirDiffClassSet:
 						undirDiffClassSet.add( (primitive, p) )
 
@@ -687,7 +690,7 @@ class Lg(object):
 			# Only create an entry where there are disagreements.
 			if len(diff1) + len(diff2) > 0:
 				segDiffs[primitive] = ( diff1, diff2 )
-				
+			
 		# RZ: Oct. 2014 - replacing method used to evaluate segmentation. Also
 		#     add checks for segments in the target being disjoint.
 		#
@@ -808,9 +811,6 @@ class Lg(object):
 		lg2.addAbsent(self)
 		self.addAbsent(lg2)
 		
-
-		#print(sorted(sre1.keys()))
-		#print(sorted(sre2.keys()))
 		# RZ (Oct. 2014) Adding indicator variables for different correctness scenarios.
 		hasCorrectSegments = 1 if len(correctSegments) == nLg2Objs and \
 				len(correctSegments) == nLg1ObjsWithAbsent else 0
@@ -845,7 +845,12 @@ class Lg(object):
 			("hasCorrectRelLab", hasCorrectRelationsAndLabels),
 			("hasCorrectStructure", hasCorrectStructure) ]
 
-		return (edgeDiffCount, segDiffs, correctSegments, metrics, primRelEdgeDiffs)
+		# RZ: June 2015 - need to subtract misclassified edges from non-matching edges
+		# to obtain correct "Delta S" (D_S) Hamming distance for mismatched
+		# segmentation edges.
+		segEdgeMismatch = edgeDiffCount - edgeDiffClassCount
+
+		return (segEdgeMismatch, segDiffs, correctSegments, metrics, primRelEdgeDiffs)
 
 	def compare(self, lg2):
 		"""Returns: 1. a list of (metric,value) pairs,
@@ -935,7 +940,7 @@ class Lg(object):
 						edgeconflicts.append((npair, [ (l1, 1.0) ], [(l2, 1.0)] ) )
 
 		# Now compute segmentation differences.
-		(segMismatch, segDiffs, correctSegs, segmentMetrics, segRelDiffs) \
+		(segEdgeMismatch, segDiffs, correctSegs, segmentMetrics, segRelDiffs) \
 				= self.compareSegments(lg2)
 
 		# UNDIRECTED/NODE PAIR METRICS
@@ -960,8 +965,8 @@ class Lg(object):
 		# Compute performance metrics; avoid divisions by 0.
 		cerror = ("D_C", nlabelMismatch) 
 		lerror = ("D_L", elabelMismatch) 
-		serror = ("D_S", segMismatch) 
-		rerror = ("D_R", elabelMismatch - segMismatch)
+		serror = ("D_S", segEdgeMismatch) 
+		rerror = ("D_R", elabelMismatch - segEdgeMismatch)
 		aerror = ("D_B", nlabelMismatch + elabelMismatch) 
 
 		# DEBUG:
@@ -972,11 +977,11 @@ class Lg(object):
 				(len(self.absentNodes) > 0 or \
 				len(lg2.absentNodes) > 0):
 			elabelMismatch = 1
-			segMismatch = 1
+			segEdgeMismatch = 1
 		
 		errorVal = 0.0
 		if numEdges > 0:
-			errorVal +=  math.sqrt(float(segMismatch) / numEdges) + \
+			errorVal +=  math.sqrt(float(segEdgeMismatch) / numEdges) + \
 					 math.sqrt(float(elabelMismatch) / numEdges)
 		if numNodes > 0:
 			errorVal += float(nlabelMismatch) / numNodes
@@ -1282,10 +1287,6 @@ class Lg(object):
 		(sp1, ps1, _, sre1) = self.segmentGraph()
 		(spGT, psGT, _, sreGT) = lgGT.segmentGraph()
 
-		allNodes = set(psGT.keys())
-		#FIX : check that primitives identical. This this not the case in spare representation 
-		assert allNodes == set(psGT.keys())
-	
 		segDiffs = set()
 		correctSegments = set()
 		for primitive in psGT.keys():

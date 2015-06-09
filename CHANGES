@@ -10,6 +10,11 @@ June 9, 2015
   for automatic object identifiers generated for the input
   graph in the relationship pairs for the second (reference/
   ground truth) graph. 
+- Corrected *S entries for .diff file output. These
+  were being computed based on segmentation edge label
+  disagreements, rather than the presence of one pair
+  of primitives being merged in one graph and not
+  the other.
 
 
 May 17, 2015
