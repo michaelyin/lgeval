@@ -118,7 +118,7 @@ do
 	nextFile="_ERROR_"
 	if [ $MODE == "Dir" ]
 	then
-		nextFile=`echo "$1/$FNAME.lg" | perl -p -i -e "s/\/\//\//g"`
+		nextFile=`echo "$1/$FNAME.lg" | perl -p -e "s/\/\//\//g"`
 	else
 		# Index to the next input file.
 		nextFile=${OUTARR[INDEX]}

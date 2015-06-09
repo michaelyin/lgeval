@@ -1,5 +1,17 @@
 CHANGES File
 
+June 9, 2015
+
+- Modified call to perl to remove '-i' in evaluate script
+  (was generating error messages)
+- Changed segment relation detection code to compare segments
+  more directly, rather than using component edges in each
+  relationship (lg.py). Harold found bug where we were looking
+  for automatic object identifiers generated for the input
+  graph in the relationship pairs for the second (reference/
+  ground truth) graph. 
+
+
 May 17, 2015
 
 - DEBUG:

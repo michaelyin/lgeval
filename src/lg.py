@@ -621,7 +621,7 @@ class Lg(object):
 		correctSegments = set([])
 		correctSegmentsAndClass = set([])
 		undirDiffClassSet = set([])
-
+		
 		# List and count errors due to segmentation.
 		# Use cmpNodes to compare the labels of symbols.
 		# Idea : build the sub graph with the current primitive as center and only 
@@ -695,6 +695,9 @@ class Lg(object):
 		# NOTE: This currently will support mutliple labels, but will lead to invalid
 		#   "Class/Det" values in 00_Summary.txt if there are multiple labels.
 		targets = {}
+
+		# RZ: Add mapping from primitive list to object ids for direct lookup.
+		targetObjIds = {}
 		matchedTargets = set()
 		for ObjID in sp2.keys():
 			# Skip absent nodes - they are not valid targets.
@@ -704,6 +707,7 @@ class Lg(object):
 			
 				# Store target label in targets dict, matches in matchedTargets dict (false init.)
 				targets[ primitiveTupleList ] = sp2[ ObjID][1]
+				targetObjIds[ primitiveTupleList ] = ObjID
 		
 		# Look for matches.
 		# Do *not* allow a primitive set to be matched more than once.
@@ -728,8 +732,6 @@ class Lg(object):
 				if len(matchingLabels) > 0:
 					ObjIDRepeats = [ObjID] * len(matchingLabels)
 					correctSegmentsAndClass.add( tuple( zip(ObjIDRepeats, list(matchingLabels))))
-				#print("NODES  : " + str(primitiveTupleList) + " LABELS: " + str(outputLabels) + " MATCH: " + str(matchingLabels))
-				#print("  CORRECT: " +  str(correctSegmentsAndClass) )
 
 		# Compute total number of object classifications (recognition targets)
 		nbSegmClass = 0
@@ -750,29 +752,31 @@ class Lg(object):
 
 			thisParentIds = set(sp1[ thisPair[0] ][0])
 			thisChildIds = set(sp1[thisPair[1] ][0])
+			
+			# RZ (June 2015): Obtain names for correct segments in target graph (lg2)
+			primitiveTupleListParent = tuple( sorted( list( thisParentIds )))
+			primitiveTupleListChild =  tuple( sorted( list ( thisChildIds )))
+			targetObjNameParent = None
+			targetObjNameChild = None
 
+			if primitiveTupleListParent in targetObjIds.keys():
+				targetObjNameParent = targetObjIds[ primitiveTupleListParent ]
+			if primitiveTupleListChild in targetObjIds.keys():
+				targetObjNameChild = targetObjIds[ primitiveTupleListChild ]
+			
 			# Check whether the objects are correctly segmented by their object identifiers
-			# (avoid counting mis-segmented objects as having valid relationships)
-			if not ( thisPair[0] in correctSegments and  thisPair[1] in correctSegments) or \
-					not thisPair in sre2.keys():
+			if not ( thisPair[0] in correctSegments and  thisPair[1] in correctSegments):
+				# Avoid counting mis-segmented objects as having valid relationships
+				falsePositive = True
+			elif not ( targetObjNameParent, targetObjNameChild ) in sre2.keys():
+				# Check that there is an edge between these objects in the target graph.
 				falsePositive = True
 			else:
-				# Check that all edges between object primitives are the same.
-				for parentId in thisParentIds:
-					for childId in thisChildIds:
-						if not (parentId, childId) in lg2.elabels.keys():
-							falsePositive = True
-							continue
-						else:
-							(cost, diffLabelPairList) = \
-									self.cmpEdges(self.elabels[ (parentId, childId) ].keys(), \
-									lg2.elabels[ (parentId, childId) ].keys())
-							if not cost == 0:
-								misLabeled = True
-								continue
-
-					if falsePositive or misLabeled:
-						continue
+				# RZ (June, 2015): Compare labels directly on relation edges.
+				# WARNING: This checks that *all* labels are identical. Fine for single labels.
+				if not sorted( sre1[ thisPair ].keys() ) == \
+						sorted( sre2[ ( targetObjNameParent, targetObjNameChild )].keys() ):
+					misLabeled = True
 					
 			# NOTE: assumes single labels on primitives.
 			# primRelEdgeDiffs records which object pairs have incorrect labels.
