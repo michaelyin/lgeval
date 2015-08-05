@@ -1164,6 +1164,40 @@ class Lg(object):
 		self.merge(lg2, addValues, addValues)
 	
 	# RETURNS None: modifies in-place.
+	# HM: Added for IJDAR CROHME draft; invoke to filter a graph.
+	# (currenly not used by default).
+	def keepOnlyCorrectLab(self, gt):
+		"""Keep only correct labels compared with the gt. Use the
+		label ERROR_N and ERROR_E for node and edges errors. Use the 
+		compareTools to compare the labels with ground truth."""
+		
+		allNodes = set(gt.nlabels.keys()).union(self.nlabels.keys())
+		self.matchAbsent(gt)
+
+		for nid in allNodes:
+			(cost,_) = self.cmpNodes(self.nlabels[nid].keys(),gt.nlabels[nid].keys())
+			#if there is some error
+			if cost > 0:
+				self.nlabels[ nid ] = {'ERROR_N' : 1.0}
+			else:
+				self.nlabels[ nid ] = gt.nlabels[nid]
+
+		for (graph,oGraph) in [ (self,gt), (gt,self) ]:
+			for npair in graph.elabels.keys():
+				cost = 0;
+				if not npair in oGraph.elabels:
+					(cost,errL) = self.cmpEdges(graph.elabels[npair].keys(),['_'])
+				else:
+					(cost,errL) = self.cmpEdges(graph.elabels[npair].keys(),oGraph.elabels[npair].keys())
+				if cost > 0:
+					self.elabels[ npair ] = {'ERROR_E' : 1.0}
+				else:
+					if npair in gt.elabels:
+						self.elabels[ npair ] = gt.elabels[npair]
+					else:
+						self.elabels[ npair ] =  {'_' : 1.0}
+
+	# RETURNS None: modifies in-place.
 	def selectMaxLabels(self):
 		"""Filter for labels with maximum confidence. NOTE: this will
 		keep all maximum value labels found in each map, e.g. if two

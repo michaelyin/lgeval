@@ -78,11 +78,11 @@ class SmallGraph(object):
 			self.edges[(a,b)] = str(tab[n+2])
 	def iso(self,osg):
 		"""true if the two graphs are isomorphisms"""
-		if(len(self.nodes.keys()) != len(osg.nodes.keys()) or \
-			len(self.edges.keys()) != len(osg.edges.keys())):
+		if(len(self.nodes.keys()) != len(osg.nodes.keys())):# or \ # problem with '_' edges which exist but should be ignored
+			#len(self.edges.keys()) != len(osg.edges.keys())):
 				return False
-		myLabels = self.nodes.values() + self.edges.values()
-		hisLabels = osg.nodes.values() + osg.edges.values()
+		myLabels = self.nodes.values() + self.edges.values() + ['_'] # add no edge label
+		hisLabels = osg.nodes.values() + osg.edges.values() + ['_'] # add no edge label
 		#myLabels.sort()
 		#hisLabels.sort()
 		#if(myLabels != hisLabels):
@@ -115,19 +115,29 @@ class SmallGraph(object):
 			if(compareTools.cmpNodes(self.nodes[my] ,osg.nodes[his]) != (0,[])):
 				#print str((self.nodes[my] ,osg.nodes[his])) + ' are diff'
 				return False
-		#then check the edges
+		#then check the edges, from self to other and reverse
+		checkedEdg = set()
+		#from self to other
 		for (a,b) in self.edges.iterkeys():
 			#id from the other through the mapping
 			(oa,ob) = (str(hisNode[a]),str(hisNode[b]))
+			checkedEdg.add((oa,ob))
 			#print str((a,b)) + " <=> " + str((oa,ob))
 			#if the edge does not exist or has a different label => missmatch
 			if not (oa,ob) in osg.edges.keys():
-				#print str((oa,ob)) + " not in osg"
+				if compareTools.cmpEdges(self.edges[(a,b)], {'_' : 1.0})!= (0,[]):
+					#print str((oa,ob)) + " not in osg"
+					return False
+			else:
+				#if self.edges[(a,b)] != osg.edges[(oa,ob)]:
+				if compareTools.cmpEdges(self.edges[(a,b)], osg.edges[(oa,ob)])!= (0,[]):
+					#print self.edges[(a,b)] + " != " + osg.edges[(oa,ob)]	
+					return False
+		#from other to self except checkedEdg, normaly, only '_' edges are remaining
+		for (oa,ob) in (set(osg.edges.iterkeys()) - checkedEdg):
+			if compareTools.cmpEdges(osg.edges[(oa,ob)], {'_' : 1.0})!= (0,[]):
 				return False
-			#if self.edges[(a,b)] != osg.edges[(oa,ob)]:
-			if compareTools.cmpEdges(self.edges[(a,b)], osg.edges[(oa,ob)])!= (0,[]):
-				#print self.edges[(a,b)] + " != " + osg.edges[(oa,ob)]	
-				return False
+			
 		return True
 
 	def __eq__(self,o):
