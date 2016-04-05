@@ -1,6 +1,6 @@
 CHANGES File
 
-April 4, 2016
+April 4, 2016 (v 0.3.3)
 
 - Corrected errors in src/sumMetric.py, where
   metrics for objects/symbols were correct,

@@ -22,12 +22,12 @@ MathJax.Hub.Queue(function() {
 ---
 
 # Label Graph Evaluation Tools (LgEval) 
-## Version 0.3.2 (October 2014)  
+## Version 0.3.3 (April 2016)  
 
 ---  
    
    
-*Copyright (c) 2012-2014, Richard Zanibbi and Harold Mouchère*
+*Copyright (c) 2012-2016, Richard Zanibbi and Harold Mouchère*
 
 [Richard Zanibbi][rlaz] (rlaz@cs.rit.edu)  
 Document and Pattern Recognition Lab,
@@ -417,7 +417,9 @@ Programs to test functionality for basic label graph operations.
 
 Further details about label graphs, the metrics used in LgEval and information about the CROHME competitions may be found in the publications listed below. The file README_MetricsAndDataStructures.txt provides some additional information about metrics produced for the raw results, and data structures used in LgEval.
 
-* H\. Mouchere, C. Viard-Gaudin, R. Zanibbi and U. Garain. (2014) [ICFHR 2014 Competition on Recognition of On-line Handwritten Mathematical Expressions (CROHME 2014)][crohme2014]. Proc. Int'l Conf. Frontiers in Handwriting Recognition, Crete, Greece (to appear, Sept. 2014). 
+* H\. Mouchere, R. Zanibbi, U. Garain and C. Viard-Gaudin. (to appear) Advancing the State-of-the-Art for Handwritten Math Recognition: The CROHME Competitions, 2011-2014. Int'l Journal on Document Analysis and Recognition. 
+
+* H\. Mouchere, C. Viard-Gaudin, R. Zanibbi and U. Garain. (2014) [ICFHR 2014 Competition on Recognition of On-line Handwritten Mathematical Expressions (CROHME 2014)][crohme2014]. Proc. Int'l Conf. Frontiers in Handwriting Recognition, pp. 791-796, Crete, Greece. 
 
 * R\. Zanibbi, H. Mouchere, and C. Viard-Gaudin (2013) [Evaluating Structural Pattern Recognition for Handwritten Math via Primitive Label Graphs Proc. Document Recognition and Retrieval][drr2013paper], Proc. SPIE vol. 8658, pp. 17-1 - 17-11, San Francisco, CA. 
 
