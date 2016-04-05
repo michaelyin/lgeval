@@ -62,7 +62,6 @@ then
 	OUTARR=($OUTPUTS)
 	TARGETS=`awk '{ print $2; }' $1`
 
-
 	if [ $# -gt 1 ]
 	then
 		DOTARG=$2
@@ -74,6 +73,7 @@ else
 	LABEL_STRING=$(printf '%s\n%s' "$OUT_STRING" "$GT_STRING")
 	echo "$LABEL_STRING"
 
+	OUTPUTS=`ls $1/*.lg`
 	TARGETS=`ls $2/*.lg`
 
 	if [ $# -gt 2 ]
