@@ -1,5 +1,13 @@
 CHANGES File
 
+April 4, 2016
+
+- Corrected errors in src/sumMetric.py, where
+  metrics for objects/symbols were correct,
+  but for primitives edge metrics were being
+  computed correctly, but reported incorrectly
+  in Summary.txt.
+
 June 9, 2015
 
 - Modified call to perl to remove '-i' in evaluate script

@@ -228,8 +228,11 @@ def main():
 		edgeRate = 100.0
 		if edges > 0:
 			edgeRate = 100 * float(edges - dlTotal) / edges
+
+		# RZ DEBUG: For relation conflicts, need to subtract segmentation and class label
+		#           edges from total errors.
 		printTable(fieldWidth,['Edges', edgeRate, edges, edges - dlTotal, dlTotal,\
-				dsTotal, dEdgeClassConflicts, dlTotal-dsTotal])
+				dsTotal, dEdgeClassConflicts, dlTotal -dsTotal -dEdgeClassConflicts])
 
 		labelRate = 100.0
 		if nodes + edges > 0:
@@ -247,7 +250,12 @@ def main():
 		if edges > 0:
 			undirNodeRel = 100 * (float(edges)/2 - duTotal)/(edges/2)
 		mergeClassErrors = int(allSum["undirDiffClassCount"])
-		printTable(fieldWidth,['Node Pairs', undirNodeRel, edges/2, int(edges)/2 - duTotal, duTotal, int(allSum["segPairErrors"] - mergeClassErrors), mergeClassErrors, duTotal - int(allSum["segPairErrors"])])
+		segPairErrors = int(allSum["segPairErrors"])
+
+		# RZ DEBUG: As above for directed edges, reporting of segmentation and relationship count
+		#           errors was wrong, despite being correct in the .csv and .diff output.
+		printTable(fieldWidth,['Node Pairs', undirNodeRel, edges/2, int(edges)/2 - duTotal, duTotal, \
+				segPairErrors, mergeClassErrors, duTotal - segPairErrors - mergeClassErrors ])
 
 		nodeAllRate = 100.0
 		nodeAllCorrect = 100.0
