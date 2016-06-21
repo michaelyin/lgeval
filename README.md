@@ -417,7 +417,7 @@ Programs to test functionality for basic label graph operations.
 
 Further details about label graphs, the metrics used in LgEval and information about the CROHME competitions may be found in the publications listed below. The file README_MetricsAndDataStructures.txt provides some additional information about metrics produced for the raw results, and data structures used in LgEval.
 
-* H\. Mouchere, R. Zanibbi, U. Garain and C. Viard-Gaudin. (to appear) Advancing the State-of-the-Art for Handwritten Math Recognition: The CROHME Competitions, 2011-2014. Int'l Journal on Document Analysis and Recognition. 
+* H\. Mouchere, R. Zanibbi, U. Garain and C. Viard-Gaudin. (2016) [Advancing the State-of-the-Art for Handwritten Math Recognition: The CROHME Competitions, 2011-2014][ijdar2016]. Int'l Journal on Document Analysis and Recognition 19(2): 173-189.
 
 * H\. Mouchere, C. Viard-Gaudin, R. Zanibbi and U. Garain. (2014) [ICFHR 2014 Competition on Recognition of On-line Handwritten Mathematical Expressions (CROHME 2014)][crohme2014]. Proc. Int'l Conf. Frontiers in Handwriting Recognition, pp. 791-796, Crete, Greece. 
 
@@ -430,7 +430,7 @@ Further details about label graphs, the metrics used in LgEval and information a
 
 
 
-
+[ijdar2016]: http://www.cs.rit.edu/~rlaz/files/CROHME_revision.pdf
 [crohme2014]: http://www.cs.rit.edu/~rlaz/files/Crohme2014FinalVersion.pdf "CROHME 2014 ICFHR paper"
 [crohme2013]: http://www.cs.rit.edu/~rlaz/files/ICDAR_CROHME2013.pdf "CROHME 2013 ICDAR paper"
 [crohmeurl]: http://www.isical.ac.in/~crohme/index.html "CROHME Competition Web Page"
