@@ -1,5 +1,8 @@
 CHANGES File
 
+June 21, 2016 (v 0.3.4)
+- Updated dates in README, License, etc.
+
 April 4, 2016 (v 0.3.3)
 
 - Corrected errors in src/sumMetric.py, where

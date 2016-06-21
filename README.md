@@ -22,7 +22,7 @@ MathJax.Hub.Queue(function() {
 ---
 
 # Label Graph Evaluation Tools (LgEval) 
-## Version 0.3.3 (April 2016)  
+## Version 0.3.4 (June 2016)  
 
 ---  
    
