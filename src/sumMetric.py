@@ -112,8 +112,8 @@ def printHist(hist,N,field_width):
 
         printTable(field_width, [ '' ] +  range(0,N) + ['>' + str(N-1)])
         print('----------------------------------------------------------------------------------')
-        printTable(field_width, [ 'Files' ] + vals + [ remaining ])
-        printTable(field_width, [ 'Cumulative' ] + cumulVals + [ total ])
+        printTable(field_width, [ 'Num. Files' ] + vals + [ remaining ])
+        printTable(field_width, [ 'Cum. Files' ] + cumulVals + [ total ])
 
 
 
@@ -419,5 +419,12 @@ def main():
 		printTable(fieldWidth,['+ Classes',100 * float(correctExps)/nbEM,nbEM,correctExps,nbEM-correctExps,'*Final'])
 		printTable(fieldWidth,['Class/Det',expRelative,correctStructure,correctExps,'']) #correctStructure-correctExps])
 		print('')
+		
+		print('')
+		print("****  LABEL ERROR HISTOGRAM (Dir. Edges, D_B)  ****")
+		print('')
+		printHist(allHist['D_B'],6,fieldWidth)
+		print('')
+
 
 main()
